@@ -562,48 +562,27 @@ const VideoChat = (() => {
     showToast("Session ended and media released", "success");
   }
 
-  /* ── Audio enhancements ── */
-  async function applyAudioConstraints() {
+  /* ── Noise suppression hint ── */
+  async function toggleNoiseSuppression() {
     if (!localStream) return;
     const audioTrack = localStream.getAudioTracks()[0];
     if (!audioTrack) return;
     try {
+      const settings = audioTrack.getSettings();
+      const current = settings.noiseSuppression;
       await audioTrack.applyConstraints({
-        noiseSuppression: noiseSuppression,
-        echoCancellation: echoCancellation,
-        autoGainControl: autoGainControl,
+        noiseSuppression: !current,
+        echoCancellation: true,
+        autoGainControl: true,
       });
+      showToast(`Noise suppression ${!current ? "enabled" : "disabled"}`, "success");
+      const btn = $("btn-noise");
+      if (btn) btn.classList.toggle("active", !current);
     } catch {
-      showToast("Audio constraints not fully supported on this device", "warning");
+      showToast("Noise suppression not supported on this device", "warning");
     }
   }
 
-  async function toggleNoiseSuppression() {
-    if (!localStream) return;
-    noiseSuppression = !noiseSuppression;
-    await applyAudioConstraints();
-    showToast(`Noise suppression ${noiseSuppression ? "enabled" : "disabled"}`, "success");
-    const btn = $("btn-noise");
-    if (btn) btn.classList.toggle("active", noiseSuppression);
-  }
-
-  async function toggleEchoCancel() {
-    if (!localStream) return;
-    echoCancellation = !echoCancellation;
-    await applyAudioConstraints();
-    showToast(`Echo cancellation ${echoCancellation ? "enabled" : "disabled"}`, "success");
-    const btn = $("btn-echo");
-    if (btn) btn.classList.toggle("active", echoCancellation);
-  }
-
-  async function toggleAutoGain() {
-    if (!localStream) return;
-    autoGainControl = !autoGainControl;
-    await applyAudioConstraints();
-    showToast(`Auto gain control ${autoGainControl ? "enabled" : "disabled"}`, "success");
-    const btn = $("btn-auto-gain");
-    if (btn) btn.classList.toggle("active", autoGainControl);
-  }
 
   /* ── Consent gate ── */
   function askConsent(callerName) {
