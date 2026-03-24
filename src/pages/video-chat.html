@@ -401,6 +401,72 @@
               </div>
             </div>
 
+            <div class="card" aria-live="polite">
+              <div class="card-header">
+                <h2 class="card-title">
+                  <i class="fa-solid fa-signal text-primary" aria-hidden="true"></i>
+                  Call Health
+                </h2>
+              </div>
+              <div class="card-body">
+                <div class="health-grid">
+                  <div class="health-item">
+                    <span class="health-label">Overall</span>
+                    <span class="health-chip quality-good" id="call-health-summary">Idle</span>
+                  </div>
+                  <div class="health-item">
+                    <span class="health-label">Latency</span>
+                    <span class="health-value" id="call-health-latency">--</span>
+                  </div>
+                  <div class="health-item">
+                    <span class="health-label">Stability</span>
+                    <span class="health-value" id="call-health-stability">--</span>
+                  </div>
+                </div>
+                <p class="health-tip mt-3" id="call-health-tip">
+                  Connect to a participant to start live quality checks.
+                </p>
+
+                <button
+                  class="btn btn-secondary mt-3 w-full"
+                  id="toggle-tech-details"
+                  type="button"
+                  aria-expanded="false"
+                  aria-controls="tech-details-panel"
+                >
+                  <i class="fa-solid fa-wrench mr-1" aria-hidden="true"></i>
+                  Show Technical Details
+                </button>
+
+                <div id="tech-details-panel" class="tech-details-panel hidden">
+                  <div class="tech-details-head">
+                    <span>For technical users</span>
+                    <span class="text-xs text-gray-500">Updates every 3s</span>
+                  </div>
+                  <div class="tech-table-wrap">
+                    <table class="tech-table" aria-label="Technical call quality details">
+                      <thead>
+                        <tr>
+                          <th>Peer</th>
+                          <th>State</th>
+                          <th>RTT</th>
+                          <th>Jitter</th>
+                          <th>Loss</th>
+                          <th>Down</th>
+                          <th>Up</th>
+                        </tr>
+                      </thead>
+                      <tbody id="tech-details-body">
+                        <tr>
+                          <td colspan="7">No active peers yet.</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div class="grid gap-2">
               <a href="/notes" class="btn btn-secondary" aria-label="Open secure notes">
                 <i class="fa-solid fa-note-sticky" aria-hidden="true"></i>

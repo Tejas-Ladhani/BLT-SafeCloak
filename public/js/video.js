@@ -15,6 +15,8 @@ const VideoChat = (() => {
   let camOff = false;
   let consentGiven = false;
   let screenSharing = false;
+  let statsTimer = null;
+  const statsSnapshot = new Map(); // peerId -> { ts, inBytes, outBytes }
 
   const state = {
     peerId: null,
@@ -36,6 +38,261 @@ const VideoChat = (() => {
   function setDotStatus(status) {
     const dot = $("status-dot");
     if (dot) dot.className = `status-dot ${status}`;
+  }
+
+  /* ── Call health panel ── */
+  function setSummaryChip(label, tone) {
+    const chip = $("call-health-summary");
+    if (!chip) return;
+    chip.textContent = label;
+    chip.className = `health-chip ${tone}`;
+  }
+
+  function setCallHealthView(summary, latency, stability, tip) {
+    setSummaryChip(summary.label, summary.tone);
+    if ($("call-health-latency")) $("call-health-latency").textContent = latency;
+    if ($("call-health-stability")) $("call-health-stability").textContent = stability;
+    if ($("call-health-tip")) $("call-health-tip").textContent = tip;
+  }
+
+  function renderTechRows(rows) {
+    const body = $("tech-details-body");
+    if (!body) return;
+    if (!rows.length) {
+      body.innerHTML = `<tr><td colspan="7">No active peers yet.</td></tr>`;
+      return;
+    }
+    body.innerHTML = rows
+      .map(
+        (r) => `
+      <tr>
+        <td class="font-mono">${r.peer}</td>
+        <td>${r.state}</td>
+        <td>${r.rtt}</td>
+        <td>${r.jitter}</td>
+        <td>${r.loss}</td>
+        <td>${r.down}</td>
+        <td>${r.up}</td>
+      </tr>
+    `
+      )
+      .join("");
+  }
+
+  function resetCallHealthPanel() {
+    setCallHealthView(
+      { label: "Idle", tone: "quality-good" },
+      "--",
+      "--",
+      "Connect to a participant to start live quality checks."
+    );
+    renderTechRows([]);
+    statsSnapshot.clear();
+  }
+
+  function classifyQuality(score) {
+    if (score >= 85) return { label: "Excellent", tone: "quality-excellent" };
+    if (score >= 70) return { label: "Good", tone: "quality-good" };
+    if (score >= 50) return { label: "Fair", tone: "quality-fair" };
+    return { label: "Poor", tone: "quality-poor" };
+  }
+
+  function latencyLabel(rttMs) {
+    if (rttMs == null) return "Unknown";
+    if (rttMs < 120) return "Low";
+    if (rttMs < 250) return "Medium";
+    return "High";
+  }
+
+  function stabilityLabel(lossPct, jitterMs) {
+    if (lossPct == null && jitterMs == null) return "Unknown";
+    if ((lossPct || 0) < 1.5 && (jitterMs || 0) < 12) return "Stable";
+    if ((lossPct || 0) < 4.5 && (jitterMs || 0) < 25) return "Mostly stable";
+    return "Unstable";
+  }
+
+  function healthTip(score) {
+    if (score >= 85) return "Connection is healthy. Audio/video should be smooth.";
+    if (score >= 70) return "Minor fluctuation detected. Keep screen share off if quality drops.";
+    if (score >= 50) return "Some instability detected. Try disabling camera for better audio.";
+    return "Network quality is low. Move closer to Wi-Fi or pause screen sharing.";
+  }
+
+  async function collectPeerStats(peerId, call) {
+    const pc = call && call.peerConnection;
+    if (!pc || typeof pc.getStats !== "function") return null;
+
+    let rttMs = null;
+    let jitterMs = null;
+    let packetsLost = 0;
+    let packetsRecv = 0;
+    let bytesIn = 0;
+    let bytesOut = 0;
+
+    try {
+      const report = await pc.getStats();
+      report.forEach((stat) => {
+        if (
+          stat.type === "candidate-pair" &&
+          (stat.nominated || stat.selected || stat.state === "succeeded")
+        ) {
+          if (typeof stat.currentRoundTripTime === "number") {
+            rttMs = stat.currentRoundTripTime * 1000;
+          }
+          if (typeof stat.bytesReceived === "number") bytesIn = Math.max(bytesIn, stat.bytesReceived);
+          if (typeof stat.bytesSent === "number") bytesOut = Math.max(bytesOut, stat.bytesSent);
+        }
+
+        if (stat.type === "inbound-rtp" && !stat.isRemote) {
+          if (typeof stat.packetsLost === "number") packetsLost += stat.packetsLost;
+          if (typeof stat.packetsReceived === "number") packetsRecv += stat.packetsReceived;
+          if (typeof stat.jitter === "number") jitterMs = Math.max(jitterMs || 0, stat.jitter * 1000);
+          if (typeof stat.bytesReceived === "number") bytesIn = Math.max(bytesIn, stat.bytesReceived);
+        }
+
+        if (stat.type === "outbound-rtp" && !stat.isRemote) {
+          if (typeof stat.bytesSent === "number") bytesOut = Math.max(bytesOut, stat.bytesSent);
+        }
+      });
+    } catch {
+      return null;
+    }
+
+    const now = Date.now();
+    const prev = statsSnapshot.get(peerId);
+    let downKbps = null;
+    let upKbps = null;
+    if (prev && now > prev.ts) {
+      const dt = (now - prev.ts) / 1000;
+      if (bytesIn >= prev.inBytes) downKbps = ((bytesIn - prev.inBytes) * 8) / 1000 / dt;
+      if (bytesOut >= prev.outBytes) upKbps = ((bytesOut - prev.outBytes) * 8) / 1000 / dt;
+    }
+    statsSnapshot.set(peerId, { ts: now, inBytes: bytesIn, outBytes: bytesOut });
+
+    const lossPct =
+      packetsRecv + packetsLost > 0 ? (packetsLost / (packetsRecv + packetsLost)) * 100 : null;
+
+    return {
+      peer: peerId,
+      state: pc.connectionState || "unknown",
+      rttMs,
+      jitterMs,
+      lossPct,
+      downKbps,
+      upKbps,
+    };
+  }
+
+  function formatMs(v) {
+    return typeof v === "number" && isFinite(v) ? `${Math.round(v)} ms` : "--";
+  }
+
+  function formatLoss(v) {
+    return typeof v === "number" && isFinite(v) ? `${v.toFixed(1)}%` : "--";
+  }
+
+  function formatKbps(v) {
+    return typeof v === "number" && isFinite(v) ? `${Math.round(v)} kbps` : "--";
+  }
+
+  async function updateCallHealthPanel() {
+    if (activeCalls.size === 0) {
+      resetCallHealthPanel();
+      return;
+    }
+
+    const rows = [];
+    for (const [peerId, call] of activeCalls.entries()) {
+      const s = await collectPeerStats(peerId, call);
+      if (!s) continue;
+      rows.push({
+        peer: s.peer,
+        state: s.state,
+        rtt: formatMs(s.rttMs),
+        jitter: formatMs(s.jitterMs),
+        loss: formatLoss(s.lossPct),
+        down: formatKbps(s.downKbps),
+        up: formatKbps(s.upKbps),
+        raw: s,
+      });
+    }
+
+    renderTechRows(rows);
+    if (!rows.length) {
+      setCallHealthView(
+        { label: "Connecting", tone: "quality-fair" },
+        "Unknown",
+        "Unknown",
+        "Collecting stats from peers..."
+      );
+      return;
+    }
+
+    const avg = rows.reduce(
+      (acc, r) => {
+        const s = r.raw;
+        if (s.rttMs != null) {
+          acc.rtt += s.rttMs;
+          acc.rttCount += 1;
+        }
+        if (s.jitterMs != null) {
+          acc.jitter += s.jitterMs;
+          acc.jitterCount += 1;
+        }
+        if (s.lossPct != null) {
+          acc.loss += s.lossPct;
+          acc.lossCount += 1;
+        }
+        return acc;
+      },
+      { rtt: 0, jitter: 0, loss: 0, rttCount: 0, jitterCount: 0, lossCount: 0 }
+    );
+
+    const avgRtt = avg.rttCount ? avg.rtt / avg.rttCount : null;
+    const avgJitter = avg.jitterCount ? avg.jitter / avg.jitterCount : null;
+    const avgLoss = avg.lossCount ? avg.loss / avg.lossCount : null;
+
+    let score = 100;
+    if (avgRtt != null) {
+      if (avgRtt >= 300) score -= 40;
+      else if (avgRtt >= 180) score -= 25;
+      else if (avgRtt >= 120) score -= 12;
+    }
+    if (avgJitter != null) {
+      if (avgJitter >= 30) score -= 28;
+      else if (avgJitter >= 18) score -= 16;
+      else if (avgJitter >= 10) score -= 8;
+    }
+    if (avgLoss != null) {
+      if (avgLoss >= 8) score -= 35;
+      else if (avgLoss >= 4) score -= 22;
+      else if (avgLoss >= 1.5) score -= 10;
+    }
+    score = Math.max(0, Math.min(100, score));
+
+    const quality = classifyQuality(score);
+    setCallHealthView(
+      quality,
+      latencyLabel(avgRtt),
+      stabilityLabel(avgLoss, avgJitter),
+      healthTip(score)
+    );
+  }
+
+  function startStatsMonitoring() {
+    if (statsTimer) clearInterval(statsTimer);
+    resetCallHealthPanel();
+    statsTimer = setInterval(() => {
+      updateCallHealthPanel();
+    }, 3000);
+  }
+
+  function stopStatsMonitoring() {
+    if (statsTimer) {
+      clearInterval(statsTimer);
+      statsTimer = null;
+    }
+    resetCallHealthPanel();
   }
 
   /* ── Browser detection ── */
@@ -308,6 +565,7 @@ const VideoChat = (() => {
       empty.className = "text-sm text-gray-500 text-center py-2";
       empty.textContent = "No participants connected";
       listEl.appendChild(empty);
+      updateCallHealthPanel();
       return;
     }
     activeCalls.forEach((_call, peerId) => {
@@ -341,6 +599,7 @@ const VideoChat = (() => {
       item.appendChild(disconnectBtn);
       listEl.appendChild(item);
     });
+    updateCallHealthPanel();
   }
 
   function handleCallStream(call) {
@@ -557,6 +816,7 @@ const VideoChat = (() => {
     }
     $("call-controls") && $("call-controls").classList.add("hidden");
     updateParticipantsList();
+    updateCallHealthPanel();
     showToast("Call ended", "info");
     // Record consent end
     ConsentManager &&
@@ -580,6 +840,7 @@ const VideoChat = (() => {
     }
     if (voiceAnimFrame) cancelAnimationFrame(voiceAnimFrame);
     if (audioContext) audioContext.close();
+    stopStatsMonitoring();
     setDotStatus("offline");
     updateStatus("Disconnected", "muted");
     showToast("Session ended and media released", "success");
@@ -703,6 +964,19 @@ const VideoChat = (() => {
 
   /* ── Init ── */
   async function init() {
+    const techToggle = $("toggle-tech-details");
+    const techPanel = $("tech-details-panel");
+    if (techToggle && techPanel) {
+      techToggle.addEventListener("click", () => {
+        const isHidden = techPanel.classList.toggle("hidden");
+        techToggle.setAttribute("aria-expanded", isHidden ? "false" : "true");
+        techToggle.innerHTML = isHidden
+          ? '<i class="fa-solid fa-wrench mr-1" aria-hidden="true"></i>Show Technical Details'
+          : '<i class="fa-solid fa-wrench mr-1" aria-hidden="true"></i>Hide Technical Details';
+      });
+    }
+
+    startStatsMonitoring();
     const ok = await startLocalMedia();
     if (ok) await initPeer();
   }
