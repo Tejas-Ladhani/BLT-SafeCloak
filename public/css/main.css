@@ -358,6 +358,37 @@ body {
   color: #374151;
 }
 
+.health-chart-legend {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  margin-bottom: 0.25rem;
+}
+
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #6b7280;
+}
+
+.legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  display: inline-block;
+}
+
+.legend-rtt {
+  background: #7c3aed;
+}
+
+.legend-loss {
+  background: #dc2626;
+}
+
 #quality-trend-canvas,
 #network-trend-canvas {
   width: 100%;

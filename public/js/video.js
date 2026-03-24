@@ -137,20 +137,27 @@ const VideoChat = (() => {
 
   function pushHistory(series, value) {
     if (typeof value !== "number" || !isFinite(value)) return;
+    // For the quality chart, anchor the first point at baseline so trend starts from bottom.
+    if (series === healthHistory.score && series.length === 0) {
+      series.push(0);
+    }
     series.push(value);
     if (series.length > healthHistory.maxPoints) series.shift();
   }
 
-  function drawLine(ctx, values, maxValue, color) {
+  function drawLine(ctx, values, maxValue, color, options = {}) {
     if (!values.length) return;
     const w = ctx.canvas.width;
     const h = ctx.canvas.height;
     const stepX = values.length > 1 ? w / (values.length - 1) : w;
+    const topPx = typeof options.topPx === "number" ? options.topPx : 4;
+    const bottomPx = typeof options.bottomPx === "number" ? options.bottomPx : h - 4;
+    const range = Math.max(1, bottomPx - topPx);
     ctx.beginPath();
     values.forEach((value, i) => {
       const x = i * stepX;
       const normalized = Math.max(0, Math.min(1, value / maxValue));
-      const y = h - normalized * (h - 8) - 4;
+      const y = bottomPx - normalized * range;
       if (i === 0) ctx.moveTo(x, y);
       else ctx.lineTo(x, y);
     });
@@ -187,8 +194,27 @@ const VideoChat = (() => {
     drawLine(qCtx, healthHistory.score, 100, "#2563eb");
 
     drawGrid(nCtx);
-    drawLine(nCtx, healthHistory.rtt, 400, "#7c3aed");
-    drawLine(nCtx, healthHistory.loss.map((x) => x * 20), 100, "#dc2626");
+    const h = nCtx.canvas.height;
+    const dividerY = Math.round(h * 0.75);
+    nCtx.beginPath();
+    nCtx.moveTo(0, dividerY);
+    nCtx.lineTo(nCtx.canvas.width, dividerY);
+    nCtx.strokeStyle = "#cbd5e1";
+    nCtx.lineWidth = 1;
+    nCtx.setLineDash([4, 3]);
+    nCtx.stroke();
+    nCtx.setLineDash([]);
+
+    // RTT in upper band
+    drawLine(nCtx, healthHistory.rtt, 400, "#7c3aed", {
+      topPx: 4,
+      bottomPx: Math.round(h * 0.7),
+    });
+    // Loss in lower band for clearer separation
+    drawLine(nCtx, healthHistory.loss, 5, "#dc2626", {
+      topPx: Math.round(h * 0.8),
+      bottomPx: h - 4,
+    });
   }
 
   async function collectPeerStats(peerId, call) {
@@ -357,17 +383,29 @@ const VideoChat = (() => {
   }
 
   function startStatsMonitoring() {
-    if (statsTimer) clearInterval(statsTimer);
+    if (statsTimer) clearTimeout(statsTimer);
     resetCallHealthPanel();
-    statsTimer = setInterval(() => {
-      updateCallHealthPanel();
-    }, 3000);
+    let cancelled = false;
+    const run = async () => {
+      if (cancelled) return;
+      await updateCallHealthPanel();
+      if (cancelled) return;
+      statsTimer = setTimeout(run, 3000);
+    };
+    statsTimer = setTimeout(run, 0);
+    startStatsMonitoring._cancel = () => {
+      cancelled = true;
+    };
   }
 
   function stopStatsMonitoring() {
     if (statsTimer) {
-      clearInterval(statsTimer);
+      clearTimeout(statsTimer);
       statsTimer = null;
+    }
+    if (typeof startStatsMonitoring._cancel === "function") {
+      startStatsMonitoring._cancel();
+      startStatsMonitoring._cancel = null;
     }
     resetCallHealthPanel();
   }
@@ -1041,6 +1079,18 @@ const VideoChat = (() => {
 
   /* ── Init ── */
   async function init() {
+    const graphToggle = $("toggle-health-graphs");
+    const graphsPanel = $("health-charts");
+    if (graphToggle && graphsPanel) {
+      graphToggle.addEventListener("click", () => {
+        const isHidden = graphsPanel.classList.toggle("hidden");
+        graphToggle.setAttribute("aria-expanded", isHidden ? "false" : "true");
+        graphToggle.innerHTML = isHidden
+          ? '<i class="fa-solid fa-chart-line mr-1" aria-hidden="true"></i>Show Graphs'
+          : '<i class="fa-solid fa-chart-line mr-1" aria-hidden="true"></i>Hide Graphs';
+      });
+    }
+
     const techToggle = $("toggle-tech-details");
     const techPanel = $("tech-details-panel");
     if (techToggle && techPanel) {
