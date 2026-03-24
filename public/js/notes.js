@@ -535,8 +535,12 @@ const NotesApp = (() => {
       } else {
         const additions = uniqueImported.filter((n) => !existingIds.has(normalizeComparableId(n.id)));
         skippedCount = uniqueImported.length - additions.length;
-        notes = [...additions, ...notes].sort((a, b) => b.updatedAt - a.updatedAt);
         addedCount = additions.length;
+        if (addedCount === 0) {
+          showToast("No new notes to import. All selected notes already exist by ID.", "info");
+          return;
+        }
+        notes = [...additions, ...notes].sort((a, b) => b.updatedAt - a.updatedAt);
       }
 
       if (!notes.length) {
