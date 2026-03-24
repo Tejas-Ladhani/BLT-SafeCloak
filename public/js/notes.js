@@ -367,7 +367,7 @@ const NotesApp = (() => {
     return {
       id: normalizedId || fallbackId,
       title: (note.title || "Untitled Note").toString().trim() || "Untitled Note",
-      content: typeof note.content === "string" ? note.content : String(note.content || ""),
+      content: typeof note.content === "string" ? note.content : "",
       tags,
       createdAt,
       updatedAt,
@@ -422,8 +422,16 @@ const NotesApp = (() => {
         </div>
       `;
       document.body.appendChild(overlay);
+      let isClosed = false;
+      const onKeyDown = (event) => {
+        if (event.key === "Escape") cleanup("cancel");
+      };
+      document.addEventListener("keydown", onKeyDown);
 
       const cleanup = (decision) => {
+        if (isClosed) return;
+        isClosed = true;
+        document.removeEventListener("keydown", onKeyDown);
         overlay.remove();
         resolve(decision);
       };
@@ -448,25 +456,49 @@ const NotesApp = (() => {
       input.accept = "application/json,.json";
       input.style.display = "none";
       document.body.appendChild(input);
+      let settled = false;
 
       const cleanup = () => {
+        window.removeEventListener("focus", onWindowFocus);
         input.remove();
       };
+
+      const settleResolve = (value) => {
+        if (settled) return;
+        settled = true;
+        cleanup();
+        resolve(value);
+      };
+
+      const settleReject = (error) => {
+        if (settled) return;
+        settled = true;
+        cleanup();
+        reject(error);
+      };
+
+      const onWindowFocus = () => {
+        // File picker closes before focus returns. If no file was selected, treat as cancel.
+        setTimeout(() => {
+          if (settled) return;
+          const file = input.files && input.files[0];
+          if (!file) settleResolve(null);
+        }, 0);
+      };
+
+      window.addEventListener("focus", onWindowFocus);
 
       input.addEventListener("change", async () => {
         try {
           const file = input.files && input.files[0];
           if (!file) {
-            cleanup();
-            resolve(null);
+            settleResolve(null);
             return;
           }
           const text = await file.text();
-          cleanup();
-          resolve({ text, fileName: file.name || "notes.json" });
+          settleResolve({ text, fileName: file.name || "notes.json" });
         } catch (err) {
-          cleanup();
-          reject(err);
+          settleReject(err);
         }
       });
 
