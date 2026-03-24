@@ -16,6 +16,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
+        darkMode: "class",
         theme: {
           extend: {
             colors: {
@@ -46,11 +47,11 @@
     />
     <link rel="stylesheet" href="css/main.css" />
   </head>
-  <body class="font-sans antialiased">
+  <body class="bg-gray-50 dark:bg-[#111827] text-gray-900 dark:text-gray-100 font-sans antialiased">
     <div class="pointer-events-none fixed inset-x-0 top-0 -z-10 h-full hero-glow"></div>
 
     <nav
-      class="sticky top-0 z-50 border-b border-neutral-border bg-white/95 backdrop-blur"
+      class="sticky top-0 z-50 border-b border-neutral-border dark:border-gray-700 bg-white/95 dark:bg-[#1F2937]/95 backdrop-blur"
       role="navigation"
       aria-label="Main navigation"
     >
@@ -66,13 +67,13 @@
             "
           />
           <div>
-            <p class="text-sm font-extrabold leading-none sm:text-base">BLT-SafeCloak</p>
-            <p class="text-xs font-medium text-gray-500">OWASP BLT Extension</p>
+            <p class="text-sm font-extrabold leading-none sm:text-base text-gray-900 dark:text-gray-100">BLT-SafeCloak</p>
+            <p class="text-xs font-medium text-gray-500 dark:text-gray-400">OWASP BLT Extension</p>
           </div>
         </a>
 
         <button
-          class="rounded-md border border-neutral-border p-2 text-gray-700 md:hidden"
+          class="rounded-md border border-neutral-border dark:border-gray-600 p-2 text-gray-700 dark:text-gray-300 md:hidden"
           id="navbar-toggle"
           aria-label="Toggle menu"
           aria-expanded="false"
@@ -82,35 +83,35 @@
         </button>
 
         <ul
-          class="navbar-nav hidden absolute left-4 right-4 top-[4.2rem] flex-col gap-2 rounded-lg border border-neutral-border bg-white p-3 md:static md:flex md:flex-row md:items-center md:gap-1 md:border-0 md:bg-transparent md:p-0"
+          class="navbar-nav hidden absolute left-4 right-4 top-[4.2rem] flex-col gap-2 rounded-lg border border-neutral-border dark:border-gray-700 bg-white dark:bg-[#1F2937] p-3 md:static md:flex md:flex-row md:items-center md:gap-1 md:border-0 md:bg-transparent md:p-0"
           id="navbar-nav"
           role="list"
         >
           <li>
             <a
               href="/"
-              class="nav-link block rounded-md px-3 py-2 text-sm font-semibold text-gray-700 transition hover:bg-[#feeae9] hover:text-primary"
+              class="nav-link block rounded-md px-3 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 transition hover:bg-[#feeae9] dark:hover:bg-red-900/30 hover:text-primary"
               >Home</a
             >
           </li>
           <li>
             <a
               href="/video-chat"
-              class="nav-link block rounded-md px-3 py-2 text-sm font-semibold text-gray-700 transition hover:bg-[#feeae9] hover:text-primary"
+              class="nav-link block rounded-md px-3 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 transition hover:bg-[#feeae9] dark:hover:bg-red-900/30 hover:text-primary"
               >Video Chat</a
             >
           </li>
           <li>
             <a
               href="/notes"
-              class="nav-link block rounded-md px-3 py-2 text-sm font-semibold text-gray-700 transition hover:bg-[#feeae9] hover:text-primary"
+              class="nav-link block rounded-md px-3 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 transition hover:bg-[#feeae9] dark:hover:bg-red-900/30 hover:text-primary"
               >Secure Notes</a
             >
           </li>
           <li>
             <a
               href="/consent"
-              class="nav-link active block rounded-md px-3 py-2 text-sm font-semibold text-gray-700 transition hover:bg-[#feeae9] hover:text-primary"
+              class="nav-link active block rounded-md px-3 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 transition hover:bg-[#feeae9] dark:hover:bg-red-900/30 hover:text-primary"
               >Consent</a
             >
           </li>
@@ -119,10 +120,21 @@
               href="https://github.com/OWASP-BLT/BLT-SafeCloak"
               target="_blank"
               rel="noopener"
-              class="nav-link block rounded-md px-3 py-2 text-sm font-semibold text-gray-700 transition hover:bg-[#feeae9] hover:text-primary"
+              class="nav-link block rounded-md px-3 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 transition hover:bg-[#feeae9] dark:hover:bg-red-900/30 hover:text-primary"
             >
               <i class="fa-brands fa-github mr-2" aria-hidden="true"></i>GitHub
             </a>
+          </li>
+          <li>
+            <button
+              id="theme-toggle"
+              type="button"
+              class="p-2 rounded-md text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              aria-label="Toggle dark mode"
+            >
+              <i class="fa-solid fa-moon dark:hidden" aria-hidden="true"></i>
+              <i class="fa-solid fa-sun hidden dark:inline" aria-hidden="true"></i>
+            </button>
           </li>
         </ul>
       </div>
@@ -131,11 +143,11 @@
     <div class="mx-auto w-full max-w-6xl px-4 pb-10 pt-8 sm:px-6 lg:px-8">
       <header class="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 class="text-2xl font-extrabold text-gray-900 sm:text-3xl">
+          <h1 class="text-2xl font-extrabold text-gray-900 dark:text-gray-100 sm:text-3xl">
             <i class="fa-solid fa-scale-balanced mr-2 text-primary" aria-hidden="true"></i>
             Consent Protection
           </h1>
-          <p class="mt-1 text-sm text-gray-600">
+          <p class="mt-1 text-sm text-gray-600 dark:text-gray-300">
             Tamper-evident consent records designed for practical compliance workflows.
           </p>
         </div>
@@ -158,7 +170,7 @@
             <i class="fa-solid fa-download" aria-hidden="true"></i>JSON
           </button>
           <button
-            class="inline-flex items-center justify-center gap-2 rounded-md border border-neutral-border bg-white px-3 py-1.5 text-xs font-bold text-gray-700 transition hover:border-primary hover:text-primary hover:bg-red-50"
+            class="inline-flex items-center justify-center gap-2 rounded-md border border-neutral-border dark:border-gray-600 bg-white dark:bg-[#111827] px-3 py-1.5 text-xs font-bold text-gray-700 dark:text-gray-300 transition hover:border-primary hover:text-primary hover:bg-red-50 dark:hover:bg-red-900/20"
             id="btn-export-csv"
             aria-label="Export consent log as CSV"
           >
@@ -196,11 +208,11 @@
 
         <div class="consent-layout">
           <section aria-label="Record new consent event" class="space-y-4">
-            <div class="border border-neutral-border rounded-xl bg-white shadow-md">
+            <div class="border border-neutral-border dark:border-gray-700 rounded-xl bg-white dark:bg-[#1F2937] shadow-md">
               <div
-                class="border-b border-gray-100 px-4 py-3.5 flex items-center justify-between gap-3"
+                class="border-b border-gray-100 dark:border-gray-700 px-4 py-3.5 flex items-center justify-between gap-3"
               >
-                <h2 class="text-base font-extrabold text-gray-900 inline-flex items-center gap-2">
+                <h2 class="text-base font-extrabold text-gray-900 dark:text-gray-100 inline-flex items-center gap-2">
                   <i class="fa-solid fa-clipboard-check text-primary" aria-hidden="true"></i>
                   Record Consent Event
                 </h2>
@@ -209,12 +221,12 @@
                 <form id="consent-form" novalidate aria-label="Consent recording form">
                   <div class="mb-4">
                     <label
-                      class="block mb-1.5 text-xs font-bold uppercase tracking-wide text-gray-600"
+                      class="block mb-1.5 text-xs font-bold uppercase tracking-wide text-gray-600 dark:text-gray-400"
                       for="consent-type"
                       >Consent Type *</label
                     >
                     <select
-                      class="w-full border border-gray-400 rounded-md px-4 py-2 bg-white text-gray-900 text-sm outline-none focus:border-red-600 focus:ring-1 focus:ring-red-600 appearance-none bg-[url('data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2712%27%20height=%2712%27%20viewBox=%270%200%2012%2012%27%3E%3Cpath%20fill=%27%236b7280%27%20d=%27M6%208L1%203h10z%27/%3E%3C/svg%3E')] bg-no-repeat bg-[right_0.75rem_center] pr-10"
+                      class="w-full border border-gray-400 dark:border-gray-600 rounded-md px-4 py-2 bg-white dark:bg-[#111827] text-gray-900 dark:text-gray-100 text-sm outline-none focus:border-red-600 focus:ring-1 focus:ring-red-600 appearance-none bg-[url('data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2712%27%20height=%2712%27%20viewBox=%270%200%2012%2012%27%3E%3Cpath%20fill=%27%236b7280%27%20d=%27M6%208L1%203h10z%27/%3E%3C/svg%3E')] bg-no-repeat bg-[right_0.75rem_center] pr-10"
                       id="consent-type"
                       name="consent-type"
                       required
@@ -228,13 +240,13 @@
 
                   <div class="mb-4">
                     <label
-                      class="block mb-1.5 text-xs font-bold uppercase tracking-wide text-gray-600"
+                      class="block mb-1.5 text-xs font-bold uppercase tracking-wide text-gray-600 dark:text-gray-400"
                       for="participant-name"
                       >Participant Name / ID *</label
                     >
                     <input
                       type="text"
-                      class="w-full border border-gray-400 rounded-md px-4 py-2 bg-white text-gray-900 text-sm outline-none focus:border-red-600 focus:ring-1 focus:ring-red-600"
+                      class="w-full border border-gray-400 dark:border-gray-600 rounded-md px-4 py-2 bg-white dark:bg-[#111827] text-gray-900 dark:text-gray-100 text-sm outline-none focus:border-red-600 focus:ring-1 focus:ring-red-600"
                       id="participant-name"
                       name="participant-name"
                       placeholder="e.g. Jane Doe or user@example.com"
@@ -246,13 +258,13 @@
 
                   <div class="mb-4">
                     <label
-                      class="block mb-1.5 text-xs font-bold uppercase tracking-wide text-gray-600"
+                      class="block mb-1.5 text-xs font-bold uppercase tracking-wide text-gray-600 dark:text-gray-400"
                       for="purpose"
                       >Purpose of Processing</label
                     >
                     <input
                       type="text"
-                      class="w-full border border-gray-400 rounded-md px-4 py-2 bg-white text-gray-900 text-sm outline-none focus:border-red-600 focus:ring-1 focus:ring-red-600"
+                      class="w-full border border-gray-400 dark:border-gray-600 rounded-md px-4 py-2 bg-white dark:bg-[#111827] text-gray-900 dark:text-gray-100 text-sm outline-none focus:border-red-600 focus:ring-1 focus:ring-red-600"
                       id="purpose"
                       name="purpose"
                       placeholder="e.g. Video call recording, AI note-taking"
@@ -262,12 +274,12 @@
 
                   <div class="mb-5">
                     <label
-                      class="block mb-1.5 text-xs font-bold uppercase tracking-wide text-gray-600"
+                      class="block mb-1.5 text-xs font-bold uppercase tracking-wide text-gray-600 dark:text-gray-400"
                       for="details"
                       >Additional Details</label
                     >
                     <textarea
-                      class="w-full border border-gray-400 rounded-md px-4 py-2 bg-white text-gray-900 text-sm outline-none focus:border-red-600 focus:ring-1 focus:ring-red-600 min-h-[100px] resize-y"
+                      class="w-full border border-gray-400 dark:border-gray-600 rounded-md px-4 py-2 bg-white dark:bg-[#111827] text-gray-900 dark:text-gray-100 text-sm outline-none focus:border-red-600 focus:ring-1 focus:ring-red-600 min-h-[100px] resize-y"
                       id="details"
                       name="details"
                       placeholder="Optional notes about this consent event..."
@@ -298,18 +310,18 @@
               </div>
             </div>
 
-            <div class="border border-neutral-border rounded-xl bg-white shadow-md">
+            <div class="border border-neutral-border dark:border-gray-700 rounded-xl bg-white dark:bg-[#1F2937] shadow-md">
               <div
-                class="border-b border-gray-100 px-4 py-3.5 flex items-center justify-between gap-3"
+                class="border-b border-gray-100 dark:border-gray-700 px-4 py-3.5 flex items-center justify-between gap-3"
               >
-                <h2 class="text-base font-extrabold text-gray-900 inline-flex items-center gap-2">
+                <h2 class="text-base font-extrabold text-gray-900 dark:text-gray-100 inline-flex items-center gap-2">
                   <i class="fa-solid fa-bolt text-primary" aria-hidden="true"></i>
                   Quick Templates
                 </h2>
               </div>
               <div class="p-4 flex flex-col gap-2">
                 <button
-                  class="inline-flex items-center justify-center gap-2 rounded-md border border-neutral-border bg-white px-4 py-2.5 text-sm font-bold text-gray-700 transition hover:border-primary hover:text-primary hover:bg-red-50"
+                  class="inline-flex items-center justify-center gap-2 rounded-md border border-neutral-border dark:border-gray-600 bg-white dark:bg-[#111827] px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-300 transition hover:border-primary hover:text-primary hover:bg-red-50 dark:hover:bg-red-900/20"
                   onclick="
                     recordTemplateConsent({
                       type: 'given',
@@ -327,7 +339,7 @@
                   Session Consent (All)
                 </button>
                 <button
-                  class="inline-flex items-center justify-center gap-2 rounded-md border border-neutral-border bg-white px-4 py-2.5 text-sm font-bold text-gray-700 transition hover:border-primary hover:text-primary hover:bg-red-50"
+                  class="inline-flex items-center justify-center gap-2 rounded-md border border-neutral-border dark:border-gray-600 bg-white dark:bg-[#111827] px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-300 transition hover:border-primary hover:text-primary hover:bg-red-50 dark:hover:bg-red-900/20"
                   onclick="
                     recordTemplateConsent({
                       type: 'given',
@@ -345,7 +357,7 @@
                   Consent to AI Notes
                 </button>
                 <button
-                  class="inline-flex items-center justify-center gap-2 rounded-md border border-neutral-border bg-white px-4 py-2.5 text-sm font-bold text-gray-700 transition hover:border-primary hover:text-primary hover:bg-red-50"
+                  class="inline-flex items-center justify-center gap-2 rounded-md border border-neutral-border dark:border-gray-600 bg-white dark:bg-[#111827] px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-300 transition hover:border-primary hover:text-primary hover:bg-red-50 dark:hover:bg-red-900/20"
                   onclick="
                     recordTemplateConsent({
                       type: 'recorded',
@@ -363,7 +375,7 @@
                   Session Started
                 </button>
                 <button
-                  class="inline-flex items-center justify-center gap-2 rounded-md border border-neutral-border bg-white px-4 py-2.5 text-sm font-bold text-gray-700 transition hover:border-primary hover:text-primary hover:bg-red-50"
+                  class="inline-flex items-center justify-center gap-2 rounded-md border border-neutral-border dark:border-gray-600 bg-white dark:bg-[#111827] px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-300 transition hover:border-primary hover:text-primary hover:bg-red-50 dark:hover:bg-red-900/20"
                   onclick="
                     recordTemplateConsent({
                       type: 'withdrawn',
@@ -384,16 +396,16 @@
               </div>
             </div>
 
-            <div class="border border-neutral-border rounded-xl bg-white shadow-md">
+            <div class="border border-neutral-border dark:border-gray-700 rounded-xl bg-white dark:bg-[#1F2937] shadow-md">
               <div
-                class="border-b border-gray-100 px-4 py-3.5 flex items-center justify-between gap-3"
+                class="border-b border-gray-100 dark:border-gray-700 px-4 py-3.5 flex items-center justify-between gap-3"
               >
-                <h2 class="text-base font-extrabold text-gray-900 inline-flex items-center gap-2">
+                <h2 class="text-base font-extrabold text-gray-900 dark:text-gray-100 inline-flex items-center gap-2">
                   <i class="fa-solid fa-scale-balanced text-primary" aria-hidden="true"></i>
                   Legal Basis
                 </h2>
               </div>
-              <div class="p-4 text-sm text-gray-600">
+              <div class="p-4 text-sm text-gray-600 dark:text-gray-300">
                 <p class="mb-3">
                   SafeCloak consent tooling supports compliance workflows by providing:
                 </p>
@@ -431,15 +443,15 @@
           </section>
 
           <section aria-label="Consent event log">
-            <div class="border border-neutral-border rounded-xl bg-white shadow-md h-full">
+            <div class="border border-neutral-border dark:border-gray-700 rounded-xl bg-white dark:bg-[#1F2937] shadow-md h-full">
               <div
-                class="border-b border-gray-100 px-4 py-3.5 flex items-center justify-between gap-3"
+                class="border-b border-gray-100 dark:border-gray-700 px-4 py-3.5 flex items-center justify-between gap-3"
               >
-                <h2 class="text-base font-extrabold text-gray-900 inline-flex items-center gap-2">
+                <h2 class="text-base font-extrabold text-gray-900 dark:text-gray-100 inline-flex items-center gap-2">
                   <i class="fa-solid fa-list-check text-primary" aria-hidden="true"></i>
                   Consent Log
                 </h2>
-                <span class="text-gray-500 text-xs">SHA-256 integrity hashed</span>
+                <span class="text-gray-500 dark:text-gray-400 text-xs">SHA-256 integrity hashed</span>
               </div>
               <div
                 class="p-4 consent-log"
@@ -453,8 +465,8 @@
       </main>
     </div>
 
-    <footer class="border-t border-neutral-border bg-white py-7" role="contentinfo">
-      <div class="mx-auto max-w-6xl px-4 text-center text-sm text-gray-600 sm:px-6 lg:px-8">
+    <footer class="border-t border-neutral-border dark:border-gray-700 bg-white dark:bg-[#1F2937] py-7" role="contentinfo">
+      <div class="mx-auto max-w-6xl px-4 text-center text-sm text-gray-600 dark:text-gray-300 sm:px-6 lg:px-8">
         BLT-SafeCloak -
         <a
           href="https://github.com/OWASP-BLT/BLT-SafeCloak"
@@ -467,6 +479,25 @@
     </footer>
 
     <div id="toast-container" role="status" aria-live="polite"></div>
+
+    <script>
+      const themeToggle = document.getElementById("theme-toggle");
+      const html = document.documentElement;
+
+      if (
+        localStorage.theme === "dark" ||
+        (!("theme" in localStorage) && window.matchMedia("(prefers-color-scheme: dark)").matches)
+      ) {
+        html.classList.add("dark");
+      }
+
+      if (themeToggle) {
+        themeToggle.addEventListener("click", () => {
+          html.classList.toggle("dark");
+          localStorage.theme = html.classList.contains("dark") ? "dark" : "light";
+        });
+      }
+    </script>
 
     <script src="js/crypto.js"></script>
     <script src="js/ui.js"></script>

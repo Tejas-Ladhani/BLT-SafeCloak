@@ -615,7 +615,7 @@ const VideoChat = (() => {
       overlay.innerHTML = `
         <div class="modal" style="max-width:440px">
           <h3>🔒 Recording Consent Required</h3>
-          <p>This call may be recorded for AI notes and security purposes. Do you consent to participate in this secure call with <strong style="color:#fff">${callerName}</strong>?</p>
+          <p>This call may be recorded for AI notes and security purposes. Do you consent to participate in this secure call with <strong>${callerName}</strong>?</p>
           <div class="alert alert-info" style="margin-bottom:1rem">
             <span>ℹ️</span>
             <span>Consent is cryptographically timestamped and stored locally. You can withdraw at any time.</span>

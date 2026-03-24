@@ -16,6 +16,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
+        darkMode: "class",
         theme: {
           extend: {
             colors: {
@@ -46,11 +47,11 @@
     />
     <link rel="stylesheet" href="css/main.css" />
   </head>
-  <body class="font-sans antialiased">
+  <body class="bg-gray-50 dark:bg-[#111827] text-gray-900 dark:text-gray-100 font-sans antialiased">
     <div class="pointer-events-none fixed inset-x-0 top-0 -z-10 h-full hero-glow"></div>
 
     <nav
-      class="sticky top-0 z-50 border-b border-neutral-border bg-white/95 backdrop-blur"
+      class="sticky top-0 z-50 border-b border-neutral-border dark:border-gray-700 bg-white/95 dark:bg-[#1F2937]/95 backdrop-blur"
       role="navigation"
       aria-label="Main navigation"
     >
@@ -66,13 +67,13 @@
             "
           />
           <div>
-            <p class="text-sm font-extrabold leading-none sm:text-base">BLT-SafeCloak</p>
-            <p class="text-xs font-medium text-gray-500">OWASP BLT Extension</p>
+            <p class="text-sm font-extrabold leading-none sm:text-base text-gray-900 dark:text-gray-100">BLT-SafeCloak</p>
+            <p class="text-xs font-medium text-gray-500 dark:text-gray-400">OWASP BLT Extension</p>
           </div>
         </a>
 
         <button
-          class="rounded-md border border-neutral-border p-2 text-gray-700 md:hidden"
+          class="rounded-md border border-neutral-border dark:border-gray-600 p-2 text-gray-700 dark:text-gray-300 md:hidden"
           id="navbar-toggle"
           aria-label="Toggle menu"
           aria-expanded="false"
@@ -82,35 +83,35 @@
         </button>
 
         <ul
-          class="navbar-nav hidden absolute left-4 right-4 top-[4.2rem] flex-col gap-2 rounded-lg border border-neutral-border bg-white p-3 md:static md:flex md:flex-row md:items-center md:gap-1 md:border-0 md:bg-transparent md:p-0"
+          class="navbar-nav hidden absolute left-4 right-4 top-[4.2rem] flex-col gap-2 rounded-lg border border-neutral-border dark:border-gray-700 bg-white dark:bg-[#1F2937] p-3 md:static md:flex md:flex-row md:items-center md:gap-1 md:border-0 md:bg-transparent md:p-0"
           id="navbar-nav"
           role="list"
         >
           <li>
             <a
               href="/"
-              class="nav-link block rounded-md px-3 py-2 text-sm font-semibold text-gray-700 transition hover:bg-[#feeae9] hover:text-primary"
+              class="nav-link block rounded-md px-3 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 transition hover:bg-[#feeae9] dark:hover:bg-red-900/30 hover:text-primary"
               >Home</a
             >
           </li>
           <li>
             <a
               href="/video-chat"
-              class="nav-link block rounded-md px-3 py-2 text-sm font-semibold text-gray-700 transition hover:bg-[#feeae9] hover:text-primary"
+              class="nav-link block rounded-md px-3 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 transition hover:bg-[#feeae9] dark:hover:bg-red-900/30 hover:text-primary"
               >Video Chat</a
             >
           </li>
           <li>
             <a
               href="/notes"
-              class="nav-link active block rounded-md px-3 py-2 text-sm font-semibold text-gray-700 transition hover:bg-[#feeae9] hover:text-primary"
+              class="nav-link active block rounded-md px-3 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 transition hover:bg-[#feeae9] dark:hover:bg-red-900/30 hover:text-primary"
               >Secure Notes</a
             >
           </li>
           <li>
             <a
               href="/consent"
-              class="nav-link block rounded-md px-3 py-2 text-sm font-semibold text-gray-700 transition hover:bg-[#feeae9] hover:text-primary"
+              class="nav-link block rounded-md px-3 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 transition hover:bg-[#feeae9] dark:hover:bg-red-900/30 hover:text-primary"
               >Consent</a
             >
           </li>
@@ -119,10 +120,21 @@
               href="https://github.com/OWASP-BLT/BLT-SafeCloak"
               target="_blank"
               rel="noopener"
-              class="nav-link block rounded-md px-3 py-2 text-sm font-semibold text-gray-700 transition hover:bg-[#feeae9] hover:text-primary"
+              class="nav-link block rounded-md px-3 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 transition hover:bg-[#feeae9] dark:hover:bg-red-900/30 hover:text-primary"
             >
               <i class="fa-brands fa-github mr-2" aria-hidden="true"></i>GitHub
             </a>
+          </li>
+          <li>
+            <button
+              id="theme-toggle"
+              type="button"
+              class="p-2 rounded-md text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              aria-label="Toggle dark mode"
+            >
+              <i class="fa-solid fa-moon dark:hidden" aria-hidden="true"></i>
+              <i class="fa-solid fa-sun hidden dark:inline" aria-hidden="true"></i>
+            </button>
           </li>
         </ul>
       </div>
@@ -131,11 +143,11 @@
     <div class="mx-auto w-full max-w-6xl px-4 pb-10 pt-8 sm:px-6 lg:px-8">
       <header class="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 class="text-2xl font-extrabold text-gray-900 sm:text-3xl">
+          <h1 class="text-2xl font-extrabold text-gray-900 dark:text-gray-100 sm:text-3xl">
             <i class="fa-solid fa-note-sticky mr-2 text-primary" aria-hidden="true"></i>
             Secure AI Notes
           </h1>
-          <p class="mt-1 text-sm text-gray-600">
+          <p class="mt-1 text-sm text-gray-600 dark:text-gray-300">
             Private notes with in-browser encryption and practical AI helpers.
           </p>
         </div>
@@ -162,7 +174,7 @@
 
       <main>
         <div
-          class="mb-4 flex gap-2.5 rounded-lg border border-green-300 bg-green-50 px-4 py-3.5 text-sm text-green-800"
+          class="mb-4 flex gap-2.5 rounded-lg border border-green-300 dark:border-green-700/40 bg-green-50 dark:bg-green-900/20 px-4 py-3.5 text-sm text-green-800 dark:text-green-200"
         >
           <i class="fa-solid fa-shield-halved mt-0.5" aria-hidden="true"></i>
           <span
@@ -173,13 +185,13 @@
 
         <div class="notes-layout" role="main" aria-label="Notes application">
           <aside
-            class="notes-sidebar border border-neutral-border rounded-xl bg-white shadow-md"
+            class="notes-sidebar border border-neutral-border dark:border-gray-700 rounded-xl bg-white dark:bg-[#1F2937] shadow-md"
             aria-label="Notes list"
           >
             <div
-              class="border-b border-gray-100 px-4 py-3.5 flex items-center justify-between gap-3"
+              class="border-b border-gray-100 dark:border-gray-700 px-4 py-3.5 flex items-center justify-between gap-3"
             >
-              <h2 class="text-sm font-extrabold text-gray-700 uppercase tracking-wide">
+              <h2 class="text-sm font-extrabold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
                 Your Notes
               </h2>
               <div class="flex gap-1.5">
@@ -192,7 +204,7 @@
                   <i class="fa-solid fa-plus" aria-hidden="true"></i>
                 </button>
                 <button
-                  class="inline-flex items-center justify-center gap-2 rounded-md border border-neutral-border bg-white px-3 py-1.5 text-xs font-bold text-gray-700 transition hover:border-primary hover:text-primary hover:bg-red-50"
+                  class="inline-flex items-center justify-center gap-2 rounded-md border border-neutral-border dark:border-gray-600 bg-white dark:bg-[#111827] px-3 py-1.5 text-xs font-bold text-gray-700 dark:text-gray-300 transition hover:border-primary hover:text-primary hover:bg-red-50 dark:hover:bg-red-900/20"
                   id="btn-export-all"
                   aria-label="Export all notes"
                   title="Export all notes as JSON"
@@ -205,12 +217,12 @@
           </aside>
 
           <div
-            class="note-editor border border-neutral-border rounded-xl bg-white shadow-md"
+            class="note-editor border border-neutral-border dark:border-gray-700 rounded-xl bg-white dark:bg-[#1F2937] shadow-md"
             aria-label="Note editor"
           >
             <div
               id="editor-empty"
-              class="flex flex-1 flex-col items-center justify-center gap-3 px-6 py-10 text-gray-500"
+              class="flex flex-1 flex-col items-center justify-center gap-3 px-6 py-10 text-gray-500 dark:text-gray-400"
             >
               <i class="fa-regular fa-note-sticky text-5xl text-primary" aria-hidden="true"></i>
               <p class="max-w-sm text-center text-sm">
@@ -230,7 +242,7 @@
               style="display: none; flex-direction: column; flex: 1; overflow: hidden"
             >
               <div
-                class="editor-toolbar border-b border-gray-100 px-4 py-3 bg-gray-50"
+                class="editor-toolbar border-b border-gray-100 dark:border-gray-700 px-4 py-3 bg-gray-50 dark:bg-[#111827]"
                 role="toolbar"
                 aria-label="Note toolbar"
               >
@@ -242,10 +254,10 @@
                 >
                   <i class="fa-solid fa-trash" aria-hidden="true"></i>
                 </button>
-                <div class="mx-1 h-4 w-px bg-gray-300" aria-hidden="true"></div>
-                <span class="text-xs font-bold uppercase tracking-wide text-gray-500">Export</span>
+                <div class="mx-1 h-4 w-px bg-gray-300 dark:bg-gray-600" aria-hidden="true"></div>
+                <span class="text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">Export</span>
                 <button
-                  class="inline-flex items-center justify-center gap-2 rounded-md border border-neutral-border bg-white px-3 py-1.5 text-xs font-bold text-gray-700 transition hover:border-primary hover:text-primary hover:bg-red-50"
+                  class="inline-flex items-center justify-center gap-2 rounded-md border border-neutral-border dark:border-gray-600 bg-white dark:bg-[#111827] px-3 py-1.5 text-xs font-bold text-gray-700 dark:text-gray-300 transition hover:border-primary hover:text-primary hover:bg-red-50 dark:hover:bg-red-900/20"
                   id="btn-export-txt"
                   title="Export as .txt"
                   aria-label="Export as text"
@@ -253,7 +265,7 @@
                   .txt
                 </button>
                 <button
-                  class="inline-flex items-center justify-center gap-2 rounded-md border border-neutral-border bg-white px-3 py-1.5 text-xs font-bold text-gray-700 transition hover:border-primary hover:text-primary hover:bg-red-50"
+                  class="inline-flex items-center justify-center gap-2 rounded-md border border-neutral-border dark:border-gray-600 bg-white dark:bg-[#111827] px-3 py-1.5 text-xs font-bold text-gray-700 dark:text-gray-300 transition hover:border-primary hover:text-primary hover:bg-red-50 dark:hover:bg-red-900/20"
                   id="btn-export-md"
                   title="Export as .md"
                   aria-label="Export as Markdown"
@@ -261,7 +273,7 @@
                   .md
                 </button>
                 <button
-                  class="inline-flex items-center justify-center gap-2 rounded-md border border-neutral-border bg-white px-3 py-1.5 text-xs font-bold text-gray-700 transition hover:border-primary hover:text-primary hover:bg-red-50"
+                  class="inline-flex items-center justify-center gap-2 rounded-md border border-neutral-border dark:border-gray-600 bg-white dark:bg-[#111827] px-3 py-1.5 text-xs font-bold text-gray-700 dark:text-gray-300 transition hover:border-primary hover:text-primary hover:bg-red-50 dark:hover:bg-red-900/20"
                   id="btn-export-json"
                   title="Export as .json"
                   aria-label="Export as JSON"
@@ -269,7 +281,8 @@
                   .json
                 </button>
                 <div
-                  style="margin-left: auto; font-size: 0.75rem; color: #6b7280"
+                  style="margin-left: auto; font-size: 0.75rem"
+                  class="text-gray-500 dark:text-gray-400"
                   id="word-count"
                   aria-live="polite"
                 >
@@ -303,28 +316,28 @@
                   aria-label="AI analysis tools"
                 >
                   <button
-                    class="inline-flex items-center justify-center gap-2 rounded-md border border-neutral-border bg-white px-3 py-1.5 text-xs font-bold text-gray-700 transition hover:border-primary hover:text-primary hover:bg-red-50"
+                    class="inline-flex items-center justify-center gap-2 rounded-md border border-neutral-border dark:border-gray-600 bg-white dark:bg-[#111827] px-3 py-1.5 text-xs font-bold text-gray-700 dark:text-gray-300 transition hover:border-primary hover:text-primary hover:bg-red-50 dark:hover:bg-red-900/20"
                     id="btn-summarize"
                     aria-label="Summarize note"
                   >
                     <i class="fa-solid fa-file-lines" aria-hidden="true"></i>Summarize
                   </button>
                   <button
-                    class="inline-flex items-center justify-center gap-2 rounded-md border border-neutral-border bg-white px-3 py-1.5 text-xs font-bold text-gray-700 transition hover:border-primary hover:text-primary hover:bg-red-50"
+                    class="inline-flex items-center justify-center gap-2 rounded-md border border-neutral-border dark:border-gray-600 bg-white dark:bg-[#111827] px-3 py-1.5 text-xs font-bold text-gray-700 dark:text-gray-300 transition hover:border-primary hover:text-primary hover:bg-red-50 dark:hover:bg-red-900/20"
                     id="btn-keypoints"
                     aria-label="Extract key points"
                   >
                     <i class="fa-solid fa-key" aria-hidden="true"></i>Key Points
                   </button>
                   <button
-                    class="inline-flex items-center justify-center gap-2 rounded-md border border-neutral-border bg-white px-3 py-1.5 text-xs font-bold text-gray-700 transition hover:border-primary hover:text-primary hover:bg-red-50"
+                    class="inline-flex items-center justify-center gap-2 rounded-md border border-neutral-border dark:border-gray-600 bg-white dark:bg-[#111827] px-3 py-1.5 text-xs font-bold text-gray-700 dark:text-gray-300 transition hover:border-primary hover:text-primary hover:bg-red-50 dark:hover:bg-red-900/20"
                     id="btn-actions"
                     aria-label="Find action items"
                   >
                     <i class="fa-solid fa-list-check" aria-hidden="true"></i>Action Items
                   </button>
                   <button
-                    class="inline-flex items-center justify-center gap-2 rounded-md border border-neutral-border bg-white px-3 py-1.5 text-xs font-bold text-gray-700 transition hover:border-primary hover:text-primary hover:bg-red-50"
+                    class="inline-flex items-center justify-center gap-2 rounded-md border border-neutral-border dark:border-gray-600 bg-white dark:bg-[#111827] px-3 py-1.5 text-xs font-bold text-gray-700 dark:text-gray-300 transition hover:border-primary hover:text-primary hover:bg-red-50 dark:hover:bg-red-900/20"
                     id="btn-keywords"
                     aria-label="Analyze keywords"
                   >
@@ -345,36 +358,36 @@
         </div>
 
         <div
-          class="surface-card border border-neutral-border bg-white shadow-md mt-6 rounded-xl p-4"
+          class="surface-card border border-neutral-border dark:border-gray-700 bg-white dark:bg-[#1F2937] shadow-md mt-6 rounded-xl p-4"
         >
           <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <div>
-              <div class="text-xs font-bold uppercase tracking-wide text-gray-500">Encryption</div>
-              <div class="mt-1 text-sm font-semibold text-gray-900">AES-256-GCM</div>
+              <div class="text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">Encryption</div>
+              <div class="mt-1 text-sm font-semibold text-gray-900 dark:text-gray-100">AES-256-GCM</div>
             </div>
             <div>
-              <div class="text-xs font-bold uppercase tracking-wide text-gray-500">
+              <div class="text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">
                 Key Derivation
               </div>
-              <div class="mt-1 text-sm font-semibold text-gray-900">PBKDF2 / SHA-256 / 100k</div>
+              <div class="mt-1 text-sm font-semibold text-gray-900 dark:text-gray-100">PBKDF2 / SHA-256 / 100k</div>
             </div>
             <div>
-              <div class="text-xs font-bold uppercase tracking-wide text-gray-500">Storage</div>
-              <div class="mt-1 text-sm font-semibold text-gray-900">Encrypted localStorage</div>
+              <div class="text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">Storage</div>
+              <div class="mt-1 text-sm font-semibold text-gray-900 dark:text-gray-100">Encrypted localStorage</div>
             </div>
             <div>
-              <div class="text-xs font-bold uppercase tracking-wide text-gray-500">
+              <div class="text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">
                 AI Processing
               </div>
-              <div class="mt-1 text-sm font-semibold text-gray-900">100% client-side</div>
+              <div class="mt-1 text-sm font-semibold text-gray-900 dark:text-gray-100">100% client-side</div>
             </div>
           </div>
         </div>
       </main>
     </div>
 
-    <footer class="border-t border-neutral-border bg-white py-7" role="contentinfo">
-      <div class="mx-auto max-w-6xl px-4 text-center text-sm text-gray-600 sm:px-6 lg:px-8">
+    <footer class="border-t border-neutral-border dark:border-gray-700 bg-white dark:bg-[#1F2937] py-7" role="contentinfo">
+      <div class="mx-auto max-w-6xl px-4 text-center text-sm text-gray-600 dark:text-gray-300 sm:px-6 lg:px-8">
         BLT-SafeCloak -
         <a
           href="https://github.com/OWASP-BLT/BLT-SafeCloak"
@@ -387,6 +400,25 @@
     </footer>
 
     <div id="toast-container" role="status" aria-live="polite"></div>
+
+    <script>
+      const themeToggle = document.getElementById("theme-toggle");
+      const html = document.documentElement;
+
+      if (
+        localStorage.theme === "dark" ||
+        (!("theme" in localStorage) && window.matchMedia("(prefers-color-scheme: dark)").matches)
+      ) {
+        html.classList.add("dark");
+      }
+
+      if (themeToggle) {
+        themeToggle.addEventListener("click", () => {
+          html.classList.toggle("dark");
+          localStorage.theme = html.classList.contains("dark") ? "dark" : "light";
+        });
+      }
+    </script>
 
     <script src="js/crypto.js"></script>
     <script src="js/ui.js"></script>

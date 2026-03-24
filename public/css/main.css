@@ -16,6 +16,11 @@ body {
   color: #111827;
 }
 
+.dark body {
+  background-color: #111827;
+  color: #f3f4f6;
+}
+
 /* === Hero Background === */
 .hero-glow {
   background:
@@ -24,10 +29,21 @@ body {
     linear-gradient(to bottom, #ffffff 0%, #f8fafc 72%, #ffffff 100%);
 }
 
+.dark .hero-glow {
+  background:
+    radial-gradient(circle at 12% 8%, rgba(225, 1, 1, 0.12), transparent 38%),
+    radial-gradient(circle at 84% 10%, rgba(225, 1, 1, 0.09), transparent 30%),
+    linear-gradient(to bottom, #111827 0%, #111827 72%, #111827 100%);
+}
+
 /* === Navigation === */
 .nav-link.active {
   color: var(--blt-primary);
   background: #feeae9;
+}
+
+.dark .nav-link.active {
+  background: rgba(127, 29, 29, 0.3);
 }
 
 .navbar-nav.open {
@@ -49,6 +65,26 @@ body {
   box-shadow: 0 12px 26px rgba(225, 1, 1, 0.12);
 }
 
+.dark .surface-card {
+  border-color: #374151;
+  background: #1f2937;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+}
+
+/* Ensure readable typography inside dark cards */
+.dark .surface-card .text-gray-900 {
+  color: #f3f4f6;
+}
+
+.dark .surface-card .text-gray-700,
+.dark .surface-card .text-gray-600 {
+  color: #d1d5db;
+}
+
+.dark .surface-card .text-gray-500 {
+  color: #9ca3af;
+}
+
 /* === Buttons (Index Page) === */
 .btn-primary-blt {
   background: var(--blt-primary);
@@ -66,6 +102,10 @@ body {
   border: 1px solid var(--blt-primary);
 }
 
+.dark .btn-outline-blt {
+  background: transparent;
+}
+
 .btn-outline-blt:hover {
   background: var(--blt-primary);
   color: #ffffff;
@@ -76,6 +116,10 @@ body {
   background: #feeae9;
   color: var(--blt-primary);
   font-weight: 700;
+}
+
+.dark .side-link.active {
+  background: rgba(127, 29, 29, 0.3);
 }
 
 /* === Toast Notifications === */
@@ -236,6 +280,7 @@ body {
 
 .modal {
   background: #ffffff;
+  border: 1px solid #e5e5e5;
   border-radius: 0.75rem;
   box-shadow: 0 20px 60px rgba(17, 24, 39, 0.3);
   padding: 1.5rem;
@@ -256,6 +301,82 @@ body {
   color: #374151;
   line-height: 1.6;
   margin-bottom: 1rem;
+}
+
+.modal strong {
+  color: #e10101;
+}
+
+.modal .alert {
+  border: 1px solid #bfdbfe;
+  background: #eff6ff;
+  color: #1e3a8a;
+  border-radius: 0.5rem;
+  padding: 0.65rem 0.75rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.modal .btn {
+  border-radius: 0.5rem;
+  padding: 0.45rem 0.9rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.modal .btn-secondary {
+  background: #ffffff;
+  color: #374151;
+  border-color: #d1d5db;
+}
+
+.modal .btn-secondary:hover {
+  border-color: #e10101;
+  color: #e10101;
+  background: #fff5f5;
+}
+
+.modal .btn-primary {
+  background: #e10101;
+  color: #ffffff;
+}
+
+.modal .btn-primary:hover {
+  background: #b91c1c;
+}
+
+.dark .modal {
+  background: #1f2937;
+  border-color: #374151;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+}
+
+.dark .modal h3 {
+  color: #f3f4f6;
+}
+
+.dark .modal p {
+  color: #d1d5db;
+}
+
+.dark .modal .alert {
+  border-color: #1d4ed8;
+  background: rgba(30, 58, 138, 0.22);
+  color: #bfdbfe;
+}
+
+.dark .modal .btn-secondary {
+  background: #111827;
+  color: #d1d5db;
+  border-color: #4b5563;
+}
+
+.dark .modal .btn-secondary:hover {
+  border-color: #e10101;
+  color: #fca5a5;
+  background: rgba(127, 29, 29, 0.25);
 }
 
 /* ============================================
@@ -328,6 +449,38 @@ body {
   margin-top: 0.28rem;
 }
 
+.dark .notes-sidebar {
+  background: #1f2937;
+  border-color: #374151;
+}
+
+.dark .notes-list {
+  background: #1f2937;
+}
+
+.dark .note-item {
+  background: #111827;
+}
+
+.dark .note-item:hover {
+  background: rgba(127, 29, 29, 0.25);
+  border-color: #7f1d1d;
+}
+
+.dark .note-item.active {
+  background: rgba(127, 29, 29, 0.35);
+  border-color: #e10101;
+}
+
+.dark .note-item-title {
+  color: #f3f4f6;
+}
+
+.dark .note-item-preview,
+.dark .note-item-date {
+  color: #9ca3af;
+}
+
 /* === Note Editor === */
 .note-editor {
   display: flex;
@@ -360,6 +513,12 @@ body {
   box-shadow: inset 0 -1px 0 #dc2626;
 }
 
+.dark .editor-title {
+  border-bottom-color: #374151;
+  background: #1f2937;
+  color: #f3f4f6;
+}
+
 .editor-body {
   width: 100%;
   flex: 1;
@@ -378,11 +537,21 @@ body {
   box-shadow: inset 0 0 0 1px #dc2626;
 }
 
+.dark .editor-body {
+  background: #1f2937;
+  color: #f3f4f6;
+}
+
 /* === AI Panel === */
 .ai-panel {
   border-top: 1px solid #f1f5f9;
   padding: 0.9rem 1rem;
   background: #fffafa;
+}
+
+.dark .ai-panel {
+  border-top-color: #374151;
+  background: #111827;
 }
 
 .ai-panel-title {
@@ -407,6 +576,12 @@ body {
   font-size: 0.84rem;
   line-height: 1.6;
   white-space: pre-wrap;
+}
+
+.dark .ai-output {
+  border-color: #374151;
+  background: #1f2937;
+  color: #d1d5db;
 }
 
 /* === Notes Media Queries === */
@@ -445,6 +620,10 @@ body {
   line-height: 1.5;
 }
 
+.dark .checkbox-wrapper span {
+  color: #d1d5db;
+}
+
 /* === Consent Layout === */
 .consent-layout {
   display: grid;
@@ -457,6 +636,10 @@ body {
   overflow-y: auto;
 }
 
+.dark .consent-log {
+  background: #1f2937;
+}
+
 /* === Consent Entry === */
 .consent-entry {
   border: 1px solid #e5e5e5;
@@ -464,6 +647,11 @@ body {
   padding: 0.9rem;
   margin-bottom: 0.7rem;
   background: #ffffff;
+}
+
+.dark .consent-entry {
+  border-color: #374151;
+  background: #111827;
 }
 
 .consent-entry-header {
@@ -503,6 +691,10 @@ body {
   font-size: 0.72rem;
 }
 
+.dark .consent-entry-time {
+  color: #9ca3af;
+}
+
 .consent-entry-name {
   color: #111827;
   font-size: 0.9rem;
@@ -510,10 +702,18 @@ body {
   margin-bottom: 0.2rem;
 }
 
+.dark .consent-entry-name {
+  color: #f3f4f6;
+}
+
 .consent-entry-details {
   color: #6b7280;
   font-size: 0.83rem;
   line-height: 1.5;
+}
+
+.dark .consent-entry-details {
+  color: #d1d5db;
 }
 
 .consent-entry-hash {
@@ -524,6 +724,10 @@ body {
     ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
     monospace;
   word-break: break-all;
+}
+
+.dark .consent-entry-hash {
+  color: #9ca3af;
 }
 
 /* === Statistics Grid === */
@@ -542,6 +746,12 @@ body {
   box-shadow: 0 6px 20px rgba(17, 24, 39, 0.05);
 }
 
+.dark .stat-card {
+  border-color: #374151;
+  background: #1f2937;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+}
+
 .stat-value {
   font-size: 1.9rem;
   font-weight: 800;
@@ -554,6 +764,10 @@ body {
   font-size: 0.8rem;
   color: #6b7280;
   font-weight: 700;
+}
+
+.dark .stat-label {
+  color: #9ca3af;
 }
 
 /* === Consent Media Queries === */
