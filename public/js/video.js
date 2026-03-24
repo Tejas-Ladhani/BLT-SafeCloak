@@ -145,13 +145,30 @@ const VideoChat = (() => {
     if (series.length > healthHistory.maxPoints) series.shift();
   }
 
-  function drawLine(ctx, values, maxValue, color, options = {}) {
+  function setupHiDPICanvas(canvas, fallbackWidth = 280, fallbackHeight = 80) {
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    const width = Math.max(1, Math.round(rect.width || fallbackWidth));
+    const height = Math.max(1, Math.round(rect.height || fallbackHeight));
+    const nextWidth = Math.round(width * dpr);
+    const nextHeight = Math.round(height * dpr);
+    if (canvas.width !== nextWidth || canvas.height !== nextHeight) {
+      canvas.width = nextWidth;
+      canvas.height = nextHeight;
+    }
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+    // Reset transform first to avoid compounding scale on repeated renders.
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.scale(dpr, dpr);
+    return { ctx, width, height };
+  }
+
+  function drawLine(ctx, width, height, values, maxValue, color, options = {}) {
     if (!values.length) return;
-    const w = ctx.canvas.width;
-    const h = ctx.canvas.height;
-    const stepX = values.length > 1 ? w / (values.length - 1) : w;
+    const stepX = values.length > 1 ? width / (values.length - 1) : width;
     const topPx = typeof options.topPx === "number" ? options.topPx : 4;
-    const bottomPx = typeof options.bottomPx === "number" ? options.bottomPx : h - 4;
+    const bottomPx = typeof options.bottomPx === "number" ? options.bottomPx : height - 4;
     const range = Math.max(1, bottomPx - topPx);
     ctx.beginPath();
     values.forEach((value, i) => {
@@ -166,17 +183,15 @@ const VideoChat = (() => {
     ctx.stroke();
   }
 
-  function drawGrid(ctx) {
-    const w = ctx.canvas.width;
-    const h = ctx.canvas.height;
-    ctx.clearRect(0, 0, w, h);
+  function drawGrid(ctx, width, height) {
+    ctx.clearRect(0, 0, width, height);
     ctx.strokeStyle = "#e5e7eb";
     ctx.lineWidth = 1;
     for (let i = 1; i <= 3; i += 1) {
-      const y = (h / 4) * i;
+      const y = (height / 4) * i;
       ctx.beginPath();
       ctx.moveTo(0, y);
-      ctx.lineTo(w, y);
+      ctx.lineTo(width, y);
       ctx.stroke();
     }
   }
@@ -186,19 +201,20 @@ const VideoChat = (() => {
     const networkCanvas = $("network-trend-canvas");
     if (!qualityCanvas || !networkCanvas) return;
 
-    const qCtx = qualityCanvas.getContext("2d");
-    const nCtx = networkCanvas.getContext("2d");
-    if (!qCtx || !nCtx) return;
+    const qualitySurface = setupHiDPICanvas(qualityCanvas, 280, 80);
+    const networkSurface = setupHiDPICanvas(networkCanvas, 280, 80);
+    if (!qualitySurface || !networkSurface) return;
+    const { ctx: qCtx, width: qW, height: qH } = qualitySurface;
+    const { ctx: nCtx, width: nW, height: nH } = networkSurface;
 
-    drawGrid(qCtx);
-    drawLine(qCtx, healthHistory.score, 100, "#2563eb");
+    drawGrid(qCtx, qW, qH);
+    drawLine(qCtx, qW, qH, healthHistory.score, 100, "#2563eb");
 
-    drawGrid(nCtx);
-    const h = nCtx.canvas.height;
-    const dividerY = Math.round(h * 0.75);
+    drawGrid(nCtx, nW, nH);
+    const dividerY = Math.round(nH * 0.75);
     nCtx.beginPath();
     nCtx.moveTo(0, dividerY);
-    nCtx.lineTo(nCtx.canvas.width, dividerY);
+    nCtx.lineTo(nW, dividerY);
     nCtx.strokeStyle = "#cbd5e1";
     nCtx.lineWidth = 1;
     nCtx.setLineDash([4, 3]);
@@ -206,14 +222,14 @@ const VideoChat = (() => {
     nCtx.setLineDash([]);
 
     // RTT in upper band
-    drawLine(nCtx, healthHistory.rtt, 400, "#7c3aed", {
+    drawLine(nCtx, nW, nH, healthHistory.rtt, 400, "#7c3aed", {
       topPx: 4,
-      bottomPx: Math.round(h * 0.7),
+      bottomPx: Math.round(nH * 0.7),
     });
     // Loss in lower band for clearer separation
-    drawLine(nCtx, healthHistory.loss, 5, "#dc2626", {
-      topPx: Math.round(h * 0.8),
-      bottomPx: h - 4,
+    drawLine(nCtx, nW, nH, healthHistory.loss, 5, "#dc2626", {
+      topPx: Math.round(nH * 0.8),
+      bottomPx: nH - 4,
     });
   }
 
