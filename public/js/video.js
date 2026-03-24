@@ -16,6 +16,9 @@ const VideoChat = (() => {
   let consentGiven = false;
   let screenSharing = false;
   let statsTimer = null;
+  let healthPanelIdle = false;
+  let healthUpdateInFlight = false;
+  let healthUpdatePending = false;
   const statsSnapshot = new Map(); // peerId -> { ts, inBytes, outBytes }
   const healthHistory = {
     score: [],
@@ -66,6 +69,9 @@ const VideoChat = (() => {
     if ($("call-health-latency")) $("call-health-latency").textContent = latency;
     if ($("call-health-stability")) $("call-health-stability").textContent = stability;
     if ($("call-health-tip")) $("call-health-tip").textContent = tip;
+    if ($("call-health-live")) {
+      $("call-health-live").textContent = `Overall ${summary.label}. Latency ${latency}. Stability ${stability}. ${tip}`;
+    }
   }
 
   function renderTechRows(rows) {
@@ -93,6 +99,7 @@ const VideoChat = (() => {
   }
 
   function resetCallHealthPanel() {
+    healthPanelIdle = true;
     setCallHealthView(
       { label: "Idle", tone: "quality-idle" },
       "--",
@@ -316,91 +323,108 @@ const VideoChat = (() => {
   }
 
   async function updateCallHealthPanel() {
-    if (activeCalls.size === 0) {
-      resetCallHealthPanel();
+    if (healthUpdateInFlight) {
+      healthUpdatePending = true;
       return;
     }
+    healthUpdateInFlight = true;
+    try {
+      if (activeCalls.size === 0) {
+        if (!healthPanelIdle) {
+          resetCallHealthPanel();
+        }
+        return;
+      }
+      healthPanelIdle = false;
 
-    const rows = [];
-    for (const [peerId, call] of activeCalls.entries()) {
-      const s = await collectPeerStats(peerId, call);
-      if (!s) continue;
-      rows.push({
-        peer: s.peer,
-        state: s.state,
-        rtt: formatMs(s.rttMs),
-        jitter: formatMs(s.jitterMs),
-        loss: formatLoss(s.lossPct),
-        down: formatKbps(s.downKbps),
-        up: formatKbps(s.upKbps),
-        raw: s,
-      });
-    }
-
-    renderTechRows(rows);
-    if (!rows.length) {
-      setCallHealthView(
-        { label: "Connecting", tone: "quality-fair" },
-        "Unknown",
-        "Unknown",
-        "Collecting stats from peers..."
+      const peerEntries = Array.from(activeCalls.entries());
+      const statsList = await Promise.all(
+        peerEntries.map(([peerId, call]) => collectPeerStats(peerId, call))
       );
-      return;
-    }
+      const rows = statsList
+        .filter(Boolean)
+        .map((s) => ({
+          peer: s.peer,
+          state: s.state,
+          rtt: formatMs(s.rttMs),
+          jitter: formatMs(s.jitterMs),
+          loss: formatLoss(s.lossPct),
+          down: formatKbps(s.downKbps),
+          up: formatKbps(s.upKbps),
+          raw: s,
+        }));
 
-    const avg = rows.reduce(
-      (acc, r) => {
-        const s = r.raw;
-        if (s.rttMs != null) {
-          acc.rtt += s.rttMs;
-          acc.rttCount += 1;
-        }
-        if (s.jitterMs != null) {
-          acc.jitter += s.jitterMs;
-          acc.jitterCount += 1;
-        }
-        if (s.lossPct != null) {
-          acc.loss += s.lossPct;
-          acc.lossCount += 1;
-        }
-        return acc;
-      },
-      { rtt: 0, jitter: 0, loss: 0, rttCount: 0, jitterCount: 0, lossCount: 0 }
-    );
+      renderTechRows(rows);
+      if (!rows.length) {
+        setCallHealthView(
+          { label: "Connecting", tone: "quality-fair" },
+          "Unknown",
+          "Unknown",
+          "Collecting stats from peers..."
+        );
+        return;
+      }
 
-    const avgRtt = avg.rttCount ? avg.rtt / avg.rttCount : null;
-    const avgJitter = avg.jitterCount ? avg.jitter / avg.jitterCount : null;
-    const avgLoss = avg.lossCount ? avg.loss / avg.lossCount : null;
+      const avg = rows.reduce(
+        (acc, r) => {
+          const s = r.raw;
+          if (s.rttMs != null) {
+            acc.rtt += s.rttMs;
+            acc.rttCount += 1;
+          }
+          if (s.jitterMs != null) {
+            acc.jitter += s.jitterMs;
+            acc.jitterCount += 1;
+          }
+          if (s.lossPct != null) {
+            acc.loss += s.lossPct;
+            acc.lossCount += 1;
+          }
+          return acc;
+        },
+        { rtt: 0, jitter: 0, loss: 0, rttCount: 0, jitterCount: 0, lossCount: 0 }
+      );
 
-    let score = 100;
-    if (avgRtt != null) {
-      if (avgRtt >= 300) score -= 40;
-      else if (avgRtt >= 180) score -= 25;
-      else if (avgRtt >= 120) score -= 12;
-    }
-    if (avgJitter != null) {
-      if (avgJitter >= 30) score -= 28;
-      else if (avgJitter >= 18) score -= 16;
-      else if (avgJitter >= 10) score -= 8;
-    }
-    if (avgLoss != null) {
-      if (avgLoss >= 8) score -= 35;
-      else if (avgLoss >= 4) score -= 22;
-      else if (avgLoss >= 1.5) score -= 10;
-    }
-    score = Math.max(0, Math.min(100, score));
+      const avgRtt = avg.rttCount ? avg.rtt / avg.rttCount : null;
+      const avgJitter = avg.jitterCount ? avg.jitter / avg.jitterCount : null;
+      const avgLoss = avg.lossCount ? avg.loss / avg.lossCount : null;
 
-    const quality = classifyQuality(score);
-    pushHistory(healthHistory.score, score);
-    if (avgRtt != null) pushHistory(healthHistory.rtt, Math.min(avgRtt, 400));
-    if (avgLoss != null) pushHistory(healthHistory.loss, Math.min(avgLoss, 5));
-    renderHealthCharts();
-    setCallHealthView(
-      quality,
-      latencyLabel(avgRtt),
-      stabilityLabel(avgLoss, avgJitter),
-      healthTip(score)
-    );
+      let score = 100;
+      if (avgRtt != null) {
+        if (avgRtt >= 300) score -= 40;
+        else if (avgRtt >= 180) score -= 25;
+        else if (avgRtt >= 120) score -= 12;
+      }
+      if (avgJitter != null) {
+        if (avgJitter >= 30) score -= 28;
+        else if (avgJitter >= 18) score -= 16;
+        else if (avgJitter >= 10) score -= 8;
+      }
+      if (avgLoss != null) {
+        if (avgLoss >= 8) score -= 35;
+        else if (avgLoss >= 4) score -= 22;
+        else if (avgLoss >= 1.5) score -= 10;
+      }
+      score = Math.max(0, Math.min(100, score));
+
+      const quality = classifyQuality(score);
+      pushHistory(healthHistory.score, score);
+      if (avgRtt != null) pushHistory(healthHistory.rtt, Math.min(avgRtt, 400));
+      if (avgLoss != null) pushHistory(healthHistory.loss, Math.min(avgLoss, 5));
+      renderHealthCharts();
+      setCallHealthView(
+        quality,
+        latencyLabel(avgRtt),
+        stabilityLabel(avgLoss, avgJitter),
+        healthTip(score)
+      );
+    } finally {
+      healthUpdateInFlight = false;
+      if (healthUpdatePending) {
+        healthUpdatePending = false;
+        void updateCallHealthPanel();
+      }
+    }
   }
 
   function startStatsMonitoring() {
@@ -952,7 +976,6 @@ const VideoChat = (() => {
     }
     $("call-controls") && $("call-controls").classList.add("hidden");
     updateParticipantsList();
-    stopStatsMonitoring();
     showToast("Call ended", "info");
     // Record consent end
     ConsentManager &&
@@ -976,7 +999,6 @@ const VideoChat = (() => {
     }
     if (voiceAnimFrame) cancelAnimationFrame(voiceAnimFrame);
     if (audioContext) audioContext.close();
-    stopStatsMonitoring();
     setDotStatus("offline");
     updateStatus("Disconnected", "muted");
     showToast("Session ended and media released", "success");
@@ -1124,9 +1146,13 @@ const VideoChat = (() => {
       });
     }
 
-    startStatsMonitoring();
     const ok = await startLocalMedia();
-    if (ok) await initPeer();
+    if (ok) {
+      startStatsMonitoring();
+      await initPeer();
+    } else {
+      stopStatsMonitoring();
+    }
   }
 
   return {

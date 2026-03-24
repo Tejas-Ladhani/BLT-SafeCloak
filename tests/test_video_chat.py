@@ -423,6 +423,56 @@ def _accept_consent(page, timeout: int = TIMEOUT_MS):
     page.click("#consent-allow")
 
 
+def _open_tech_details(page, timeout: int = TIMEOUT_MS):
+    """Ensure technical details panel is visible."""
+    page.wait_for_selector("#toggle-tech-details", timeout=timeout)
+    expanded = page.get_attribute("#toggle-tech-details", "aria-expanded")
+    if expanded != "true":
+        page.click("#toggle-tech-details")
+    page.wait_for_function(
+        "() => { const p = document.getElementById('tech-details-panel'); return p && !p.classList.contains('hidden'); }",
+        timeout=timeout,
+    )
+
+
+def _assert_call_health_idle(page, timeout: int = TIMEOUT_MS):
+    """Verify call health summary resets to idle."""
+    page.wait_for_function(
+        "() => { const el = document.getElementById('call-health-summary'); return el && el.textContent.trim() === 'Idle'; }",
+        timeout=timeout,
+    )
+
+
+def _assert_graphs_accessibility_and_default_state(page, timeout: int = TIMEOUT_MS):
+    """Verify graph canvases are accessible and visible by default."""
+    page.wait_for_selector("#quality-trend-canvas", timeout=timeout)
+    page.wait_for_selector("#network-trend-canvas", timeout=timeout)
+    page.wait_for_selector("#toggle-health-graphs", timeout=timeout)
+    assert (
+        page.get_attribute("#toggle-health-graphs", "aria-expanded") == "true"
+    ), "Graphs toggle should be expanded by default"
+    assert (
+        page.get_attribute("#quality-trend-canvas", "role") == "img"
+    ), "Quality chart should expose role=img"
+    assert (
+        page.get_attribute("#network-trend-canvas", "role") == "img"
+    ), "Network chart should expose role=img"
+    assert (
+        page.get_attribute("#quality-trend-canvas", "aria-label") is not None
+    ), "Quality chart should have aria-label"
+    assert (
+        page.get_attribute("#network-trend-canvas", "aria-label") is not None
+    ), "Network chart should have aria-label"
+
+
+def _assert_call_health_live_region(page, timeout: int = TIMEOUT_MS):
+    """Verify a focused live region is present for assistive tech."""
+    page.wait_for_function(
+        "() => { const el = document.getElementById('call-health-live'); return !!el && el.getAttribute('aria-live') === 'polite' && el.getAttribute('aria-atomic') === 'true'; }",
+        timeout=timeout,
+    )
+
+
 _STREAM_CHECK_JS = """
 () => {
     const wrappers = Array.from(document.querySelectorAll('.video-wrapper'));
@@ -463,6 +513,12 @@ def test_three_clients_connect_and_see_cameras(base_url):
             for page in (p1, p2, p3):
                 page.goto(video_url)
 
+            # ── Call Health defaults ────────────────────────────────────────
+            _assert_call_health_idle(p1)
+            _assert_call_health_live_region(p1)
+            _assert_graphs_accessibility_and_default_state(p1)
+            _open_tech_details(p1)
+
             # ── Collect peer IDs ─────────────────────────────────────────────
             id1 = _peer_id(p1)
             id2 = _peer_id(p2)
@@ -484,6 +540,12 @@ def test_three_clients_connect_and_see_cameras(base_url):
             )
             p2.wait_for_function(
                 "document.querySelectorAll('.video-wrapper').length >= 2",
+                timeout=TIMEOUT_MS,
+            )
+
+            # Technical table should populate after at least one peer connection.
+            p1.wait_for_function(
+                "() => { const rows = document.querySelectorAll('#tech-details-body tr'); return rows.length > 0 && !rows[0].textContent.includes('No active peers yet.'); }",
                 timeout=TIMEOUT_MS,
             )
 
@@ -514,5 +576,9 @@ def test_three_clients_connect_and_see_cameras(base_url):
                 assert page.evaluate(_STREAM_CHECK_JS), (
                     f"{name} should see live streams from both other participants"
                 )
+
+            # ── Step 5: end call should reset Call Health panel ─────────────
+            p1.click("#btn-end")
+            _assert_call_health_idle(p1)
         finally:
             browser.close()
