@@ -27,6 +27,13 @@ const VideoChat = (() => {
 
   /* ── DOM helpers ── */
   const $ = (id) => document.getElementById(id);
+  const escapeHtml = (value) =>
+    String(value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
 
   function updateStatus(text, type = "muted") {
     const el = $("connection-status");
@@ -66,13 +73,13 @@ const VideoChat = (() => {
       .map(
         (r) => `
       <tr>
-        <td class="font-mono">${r.peer}</td>
-        <td>${r.state}</td>
-        <td>${r.rtt}</td>
-        <td>${r.jitter}</td>
-        <td>${r.loss}</td>
-        <td>${r.down}</td>
-        <td>${r.up}</td>
+        <td class="font-mono">${escapeHtml(r.peer)}</td>
+        <td>${escapeHtml(r.state)}</td>
+        <td>${escapeHtml(r.rtt)}</td>
+        <td>${escapeHtml(r.jitter)}</td>
+        <td>${escapeHtml(r.loss)}</td>
+        <td>${escapeHtml(r.down)}</td>
+        <td>${escapeHtml(r.up)}</td>
       </tr>
     `
       )
