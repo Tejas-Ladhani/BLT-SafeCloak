@@ -8,6 +8,14 @@
       name="description"
       content="AES-256-GCM encrypted meeting notes with client-side summarization, key-point extraction, and action-item detection."
     />
+    <script>
+      (function () {
+        const shouldUseDark =
+          localStorage.theme === "dark" ||
+          (!("theme" in localStorage) && window.matchMedia("(prefers-color-scheme: dark)").matches);
+        document.documentElement.classList.toggle("dark", shouldUseDark);
+      })();
+    </script>
     <link
       rel="icon"
       href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><path fill='%23E10101' d='M32 4l22 8v17c0 14-9.7 26.3-22 30C19.7 55.3 10 43 10 29V12z'/><path fill='white' d='M32 16l12 4v9c0 7.9-5.2 14.9-12 17-6.8-2.1-12-9.1-12-17v-9z'/></svg>"
@@ -131,6 +139,7 @@
               type="button"
               class="p-2 rounded-md text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
               aria-label="Toggle dark mode"
+              aria-pressed="false"
             >
               <i class="fa-solid fa-moon dark:hidden" aria-hidden="true"></i>
               <i class="fa-solid fa-sun hidden dark:inline" aria-hidden="true"></i>
@@ -405,17 +414,17 @@
       const themeToggle = document.getElementById("theme-toggle");
       const html = document.documentElement;
 
-      if (
-        localStorage.theme === "dark" ||
-        (!("theme" in localStorage) && window.matchMedia("(prefers-color-scheme: dark)").matches)
-      ) {
-        html.classList.add("dark");
-      }
+      const syncThemeToggleState = () => {
+        if (!themeToggle) return;
+        themeToggle.setAttribute("aria-pressed", html.classList.contains("dark") ? "true" : "false");
+      };
+      syncThemeToggleState();
 
       if (themeToggle) {
         themeToggle.addEventListener("click", () => {
           html.classList.toggle("dark");
           localStorage.theme = html.classList.contains("dark") ? "dark" : "light";
+          syncThemeToggleState();
         });
       }
     </script>
