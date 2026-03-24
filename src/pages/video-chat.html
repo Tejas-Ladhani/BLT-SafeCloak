@@ -426,6 +426,22 @@
                 <p class="health-tip mt-3" id="call-health-tip">
                   Connect to a participant to start live quality checks.
                 </p>
+                <div class="health-charts mt-3" aria-label="Call quality trends">
+                  <div class="health-chart-card">
+                    <div class="health-chart-head">
+                      <span>Quality Trend</span>
+                      <span class="text-xs text-gray-500">last ~2 min</span>
+                    </div>
+                    <canvas id="quality-trend-canvas" width="280" height="80"></canvas>
+                  </div>
+                  <div class="health-chart-card">
+                    <div class="health-chart-head">
+                      <span>Latency / Loss</span>
+                      <span class="text-xs text-gray-500">RTT ms · Loss %</span>
+                    </div>
+                    <canvas id="network-trend-canvas" width="280" height="80"></canvas>
+                  </div>
+                </div>
 
                 <button
                   class="btn btn-secondary mt-3 w-full"

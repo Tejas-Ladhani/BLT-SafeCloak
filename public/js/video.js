@@ -17,6 +17,12 @@ const VideoChat = (() => {
   let screenSharing = false;
   let statsTimer = null;
   const statsSnapshot = new Map(); // peerId -> { ts, inBytes, outBytes }
+  const healthHistory = {
+    score: [],
+    rtt: [],
+    loss: [],
+    maxPoints: 40,
+  };
 
   const state = {
     peerId: null,
@@ -95,6 +101,10 @@ const VideoChat = (() => {
     );
     renderTechRows([]);
     statsSnapshot.clear();
+    healthHistory.score = [];
+    healthHistory.rtt = [];
+    healthHistory.loss = [];
+    renderHealthCharts();
   }
 
   function classifyQuality(score) {
@@ -123,6 +133,62 @@ const VideoChat = (() => {
     if (score >= 70) return "Minor fluctuation detected. Keep screen share off if quality drops.";
     if (score >= 50) return "Some instability detected. Try disabling camera for better audio.";
     return "Network quality is low. Move closer to Wi-Fi or pause screen sharing.";
+  }
+
+  function pushHistory(series, value) {
+    if (typeof value !== "number" || !isFinite(value)) return;
+    series.push(value);
+    if (series.length > healthHistory.maxPoints) series.shift();
+  }
+
+  function drawLine(ctx, values, maxValue, color) {
+    if (!values.length) return;
+    const w = ctx.canvas.width;
+    const h = ctx.canvas.height;
+    const stepX = values.length > 1 ? w / (values.length - 1) : w;
+    ctx.beginPath();
+    values.forEach((value, i) => {
+      const x = i * stepX;
+      const normalized = Math.max(0, Math.min(1, value / maxValue));
+      const y = h - normalized * (h - 8) - 4;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    });
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = color;
+    ctx.stroke();
+  }
+
+  function drawGrid(ctx) {
+    const w = ctx.canvas.width;
+    const h = ctx.canvas.height;
+    ctx.clearRect(0, 0, w, h);
+    ctx.strokeStyle = "#e5e7eb";
+    ctx.lineWidth = 1;
+    for (let i = 1; i <= 3; i += 1) {
+      const y = (h / 4) * i;
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(w, y);
+      ctx.stroke();
+    }
+  }
+
+  function renderHealthCharts() {
+    const qualityCanvas = $("quality-trend-canvas");
+    const networkCanvas = $("network-trend-canvas");
+    if (!qualityCanvas || !networkCanvas) return;
+
+    const qCtx = qualityCanvas.getContext("2d");
+    const nCtx = networkCanvas.getContext("2d");
+    if (!qCtx || !nCtx) return;
+
+    drawGrid(qCtx);
+    drawLine(qCtx, healthHistory.score, 100, "#2563eb");
+
+    drawGrid(nCtx);
+    drawLine(nCtx, healthHistory.rtt, 400, "#7c3aed");
+    drawLine(nCtx, healthHistory.loss.map((x) => x * 20), 100, "#dc2626");
   }
 
   async function collectPeerStats(peerId, call) {
@@ -278,6 +344,10 @@ const VideoChat = (() => {
     score = Math.max(0, Math.min(100, score));
 
     const quality = classifyQuality(score);
+    pushHistory(healthHistory.score, score);
+    if (avgRtt != null) pushHistory(healthHistory.rtt, Math.min(avgRtt, 400));
+    if (avgLoss != null) pushHistory(healthHistory.loss, Math.min(avgLoss, 5));
+    renderHealthCharts();
     setCallHealthView(
       quality,
       latencyLabel(avgRtt),
