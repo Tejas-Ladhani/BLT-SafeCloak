@@ -136,7 +136,8 @@ const NotesApp = (() => {
     // Update list without full re-render
     const item = document.querySelector(`.note-item[data-id="${activeNoteId}"]`);
     if (item) {
-      item.querySelector(".note-item-title").textContent = note.title;
+      const titleText = item.querySelector(".note-item-title-text");
+      if (titleText) titleText.textContent = note.title;
       item.querySelector(".note-item-preview").textContent = note.content.slice(0, PREVIEW_LENGTH);
       item.querySelector(".note-item-date").textContent = formatDateShort(note.updatedAt);
     }
@@ -162,7 +163,10 @@ const NotesApp = (() => {
       .map(
         (n) => `
       <div class="note-item${n.id === activeNoteId ? " active" : ""}" data-id="${n.id}" tabindex="0" role="button">
-        <div class="note-item-title">${escHtml(n.title)}</div>
+        <div class="note-item-title">
+          <span class="note-item-title-text">${escHtml(n.title)}</span>
+          ${n.imported ? '<span class="note-imported-badge">Imported</span>' : ""}
+        </div>
         <div class="note-item-preview">${escHtml(n.content.slice(0, PREVIEW_LENGTH))}</div>
         <div class="note-item-date">${formatDateShort(n.updatedAt)}</div>
       </div>
@@ -335,6 +339,235 @@ const NotesApp = (() => {
     showToast(`${notes.length} notes exported`, "success");
   }
 
+  function isValidImportedNote(note) {
+    return note && typeof note === "object" && typeof note.title === "string";
+  }
+
+  function normaliseImportedNotes(payload) {
+    if (Array.isArray(payload)) return payload;
+    if (payload && Array.isArray(payload.notes)) return payload.notes;
+    if (isValidImportedNote(payload)) return [payload];
+    return [];
+  }
+
+  function normalizeComparableId(value) {
+    if (value === null || value === undefined) return "";
+    return String(value).trim();
+  }
+
+  function sanitizeImportedNote(note, fallbackId, importSource) {
+    const now = Date.now();
+    const createdAt = Number.isFinite(note.createdAt) ? Number(note.createdAt) : now;
+    const updatedAt = Number.isFinite(note.updatedAt) ? Number(note.updatedAt) : createdAt;
+    const tags = Array.isArray(note.tags)
+      ? note.tags.filter((tag) => typeof tag === "string").slice(0, 20)
+      : [];
+
+    const normalizedId = normalizeComparableId(note.id);
+    return {
+      id: normalizedId || fallbackId,
+      title: (note.title || "Untitled Note").toString().trim() || "Untitled Note",
+      content: typeof note.content === "string" ? note.content : String(note.content || ""),
+      tags,
+      createdAt,
+      updatedAt,
+      imported: true,
+      importedAt: now,
+      importSource: importSource || "manual-import",
+    };
+  }
+
+  function chooseImportMode(importCount, overlapCount) {
+    return new Promise((resolve) => {
+      const noteWord = importCount === 1 ? "note" : "notes";
+      const conflictVerb = overlapCount === 1 ? "is" : "are";
+      const conflictSummary =
+        overlapCount === importCount
+          ? `Found <strong>${importCount}</strong> ${noteWord} in the selected import file, out of which all ${conflictVerb} conflicting.`
+          : `Found <strong>${importCount}</strong> ${noteWord} in the selected import file, out of which <strong>${overlapCount}</strong> ${conflictVerb} conflicting.`;
+      const overlay = document.createElement("div");
+      overlay.className = "modal-overlay";
+      overlay.style.display = "flex";
+      overlay.innerHTML = `
+        <div class="modal notes-import-modal" role="dialog" aria-modal="true" aria-labelledby="notes-import-title">
+          <button
+            class="notes-import-close"
+            id="notes-import-close"
+            type="button"
+            aria-label="Close conflict dialog"
+          >
+            &times;
+          </button>
+          <h3 id="notes-import-title">Resolve Note Conflicts</h3>
+          <p class="notes-import-summary">${conflictSummary}</p>
+          <p class="notes-import-footnote">
+            <strong>*</strong> Comparison is based on note IDs, not note content.
+          </p>
+          <div class="notes-import-actions">
+            <button
+              class="inline-flex items-center justify-center gap-2 rounded-md border border-neutral-border bg-white px-3 py-1.5 text-xs font-bold text-gray-700 transition hover:border-primary hover:text-primary hover:bg-red-50"
+              id="notes-import-skip-conflicts"
+              type="button"
+            >
+              Import New Only
+            </button>
+            <button
+              class="inline-flex items-center justify-center gap-2 rounded-md border border-transparent bg-primary px-3 py-1.5 text-xs font-bold text-white transition hover:bg-primary-hover"
+              id="notes-import-replace-conflicts"
+              type="button"
+            >
+              Import All (Replace Conflicts)
+            </button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(overlay);
+
+      const cleanup = (decision) => {
+        overlay.remove();
+        resolve(decision);
+      };
+
+      overlay.querySelector("#notes-import-close").addEventListener("click", () => cleanup("cancel"));
+      overlay
+        .querySelector("#notes-import-skip-conflicts")
+        .addEventListener("click", () => cleanup("skip_conflicts"));
+      overlay
+        .querySelector("#notes-import-replace-conflicts")
+        .addEventListener("click", () => cleanup("replace_conflicts"));
+      overlay.addEventListener("click", (event) => {
+        if (event.target === overlay) cleanup("cancel");
+      });
+    });
+  }
+
+  function readJsonFileFromPicker() {
+    return new Promise((resolve, reject) => {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = "application/json,.json";
+      input.style.display = "none";
+      document.body.appendChild(input);
+
+      const cleanup = () => {
+        input.remove();
+      };
+
+      input.addEventListener("change", async () => {
+        try {
+          const file = input.files && input.files[0];
+          if (!file) {
+            cleanup();
+            resolve(null);
+            return;
+          }
+          const text = await file.text();
+          cleanup();
+          resolve({ text, fileName: file.name || "notes.json" });
+        } catch (err) {
+          cleanup();
+          reject(err);
+        }
+      });
+
+      input.click();
+    });
+  }
+
+  async function importNotesFromFile() {
+    try {
+      const fileData = await readJsonFileFromPicker();
+      if (fileData === null) return;
+
+      let parsed;
+      try {
+        parsed = JSON.parse(fileData.text);
+      } catch {
+        showToast("Import failed: file is not valid JSON", "error");
+        return;
+      }
+
+      const imported = normaliseImportedNotes(parsed).filter(isValidImportedNote);
+      if (!imported.length) {
+        showToast("Import failed: no valid notes found in file", "error");
+        return;
+      }
+
+      const normalized = imported.map((note, index) =>
+        sanitizeImportedNote(note, `imported-${Date.now()}-${index}`, fileData.fileName)
+      );
+      const seenIds = new Set();
+      const uniqueImported = normalized.filter((note) => {
+        const key = normalizeComparableId(note.id);
+        if (!key || seenIds.has(key)) return false;
+        seenIds.add(key);
+        return true;
+      });
+
+      const existingIds = new Set(notes.map((n) => normalizeComparableId(n.id)).filter(Boolean));
+      const overlapCount = uniqueImported.filter((n) => existingIds.has(normalizeComparableId(n.id))).length;
+      let mode = "skip_conflicts";
+      if (overlapCount > 0) {
+        mode = await chooseImportMode(uniqueImported.length, overlapCount);
+        if (mode === "cancel") return;
+      }
+
+      let addedCount = 0;
+      let skippedCount = 0;
+      let replacedCount = 0;
+
+      if (mode === "replace_conflicts") {
+        const byId = new Map(
+          notes
+            .map((n) => [normalizeComparableId(n.id), n])
+            .filter(([key]) => Boolean(key))
+        );
+        uniqueImported.forEach((importedNote) => {
+          const key = normalizeComparableId(importedNote.id);
+          if (byId.has(key)) {
+            replacedCount += 1;
+          } else {
+            addedCount += 1;
+          }
+          byId.set(key, importedNote);
+        });
+        notes = Array.from(byId.values()).sort((a, b) => b.updatedAt - a.updatedAt);
+      } else {
+        const additions = uniqueImported.filter((n) => !existingIds.has(normalizeComparableId(n.id)));
+        skippedCount = uniqueImported.length - additions.length;
+        notes = [...additions, ...notes].sort((a, b) => b.updatedAt - a.updatedAt);
+        addedCount = additions.length;
+      }
+
+      if (!notes.length) {
+        activeNoteId = null;
+      } else if (!notes.some((n) => n.id === activeNoteId)) {
+        activeNoteId = notes[0].id;
+      }
+
+      await saveNotes();
+      renderNotesList();
+      renderEditor();
+
+      if (mode === "replace_conflicts") {
+        showToast(
+          `Imported ${addedCount + replacedCount} notes (${addedCount} added, ${replacedCount} replaced)`,
+          "success"
+        );
+      } else if (skippedCount > 0) {
+        showToast(
+          `Imported ${addedCount} new notes and skipped ${skippedCount} conflicts`,
+          "success"
+        );
+      } else {
+        showToast(`Imported ${addedCount} notes`, "success");
+      }
+    } catch (err) {
+      console.error("Import notes failed:", err);
+      showToast("Import failed. Please try again.", "error");
+    }
+  }
+
   /* ── Utils ── */
   function escHtml(str) {
     return str
@@ -380,6 +613,8 @@ const NotesApp = (() => {
         .addEventListener("click", () => exportNote("json"));
     document.getElementById("btn-export-all") &&
       document.getElementById("btn-export-all").addEventListener("click", exportAllNotes);
+    document.getElementById("btn-import-notes") &&
+      document.getElementById("btn-import-notes").addEventListener("click", importNotesFromFile);
 
     // AI buttons
     document.getElementById("btn-summarize") &&
@@ -415,7 +650,15 @@ const NotesApp = (() => {
       });
   }
 
-  return { init, createNote, deleteNote, exportNote, exportAllNotes, notes: () => notes };
+  return {
+    init,
+    createNote,
+    deleteNote,
+    exportNote,
+    exportAllNotes,
+    importNotesFromFile,
+    notes: () => notes,
+  };
 })();
 
 document.addEventListener("DOMContentLoaded", () => NotesApp.init());
