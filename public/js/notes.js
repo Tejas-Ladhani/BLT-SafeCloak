@@ -63,6 +63,11 @@ const NotesApp = (() => {
   let passphrase = null;
   let saveTimer = null;
 
+  function cloneNotesSnapshot(sourceNotes) {
+    if (typeof structuredClone === "function") return structuredClone(sourceNotes);
+    return JSON.parse(JSON.stringify(sourceNotes));
+  }
+
   /* ── Persistence ── */
   function getPassphrase() {
     if (passphrase) return passphrase;
@@ -143,13 +148,23 @@ const NotesApp = (() => {
   }
 
   function scheduleSave() {
-    clearTimeout(saveTimer);
+    cancelAutosave();
+    const notesSnapshot = cloneNotesSnapshot(notes);
     saveTimer = setTimeout(() => {
-      saveNotes().catch((err) => {
+      saveNotes(notesSnapshot).catch((err) => {
         console.error("Failed to save notes:", err);
         showToast("Failed to save notes. Please try again.", "error");
+      }).finally(() => {
+        saveTimer = null;
       });
     }, 800);
+  }
+
+  function cancelAutosave() {
+    if (saveTimer !== null) {
+      clearTimeout(saveTimer);
+      saveTimer = null;
+    }
   }
 
   /* ── Rendering ── */
@@ -382,7 +397,10 @@ const NotesApp = (() => {
     const normalizedId = createSafeImportedId(note.id);
     return {
       id: normalizedId || createSafeImportedId(fallbackId),
-      title: (note.title || "Untitled Note").toString().trim() || "Untitled Note",
+      title:
+        typeof note.title === "string" && note.title.trim()
+          ? note.title.trim()
+          : "Untitled Note",
       content: typeof note.content === "string" ? note.content : "",
       tags,
       createdAt,
@@ -639,6 +657,7 @@ const NotesApp = (() => {
             ? activeNoteId
             : nextNotes[0].id;
 
+      cancelAutosave();
       await saveNotes(nextNotes);
       notes = nextNotes;
       activeNoteId = nextActiveNoteId;
