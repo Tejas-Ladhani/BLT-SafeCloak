@@ -457,6 +457,12 @@ const NotesApp = (() => {
       `;
       document.body.appendChild(overlay);
       const previouslyFocusedElement = document.activeElement;
+      const previousOverflow = document.body.style.overflow;
+      const previousTouchAction = document.body.style.touchAction;
+      document.body.style.overflow = "hidden";
+      if ("ontouchstart" in window || navigator.maxTouchPoints > 0) {
+        document.body.style.touchAction = "none";
+      }
       const getFocusableElements = () =>
         Array.from(
           overlay.querySelectorAll(
@@ -499,6 +505,8 @@ const NotesApp = (() => {
         if (isClosed) return;
         isClosed = true;
         document.removeEventListener("keydown", onKeyDown);
+        document.body.style.overflow = previousOverflow;
+        document.body.style.touchAction = previousTouchAction;
         overlay.remove();
         if (
           previouslyFocusedElement &&
@@ -670,26 +678,20 @@ const NotesApp = (() => {
       renderNotesList();
       renderEditor();
 
+      const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
       if (mode === "replace_conflicts") {
-        const entryWord = rawImportCount === 1 ? "entry" : "entries";
+        const total = addedCount + replacedCount;
         showToast(
-          `Processed ${rawImportCount} parsed ${entryWord}: ${addedCount + replacedCount} notes imported (${addedCount} added, ${replacedCount} replaced)`,
+          `Imported ${plural(total, "note")} (${addedCount} added, ${replacedCount} replaced)`,
           "success"
         );
       } else if (skippedCount > 0) {
-        const entryWord = rawImportCount === 1 ? "entry" : "entries";
-        const conflictWord = skippedCount === 1 ? "conflict" : "conflicts";
         showToast(
-          `Processed ${rawImportCount} parsed ${entryWord}: imported ${addedCount} new notes and skipped ${skippedCount} ${conflictWord}`,
+          `Imported ${plural(addedCount, "new note")} and skipped ${plural(skippedCount, "conflict")}`,
           "success"
         );
       } else {
-        const entryWord = rawImportCount === 1 ? "entry" : "entries";
-        const noteWordImported = addedCount === 1 ? "note" : "notes";
-        showToast(
-          `Processed ${rawImportCount} parsed ${entryWord}: imported ${addedCount} ${noteWordImported}`,
-          "success"
-        );
+        showToast(`Imported ${plural(addedCount, "note")}`, "success");
       }
     } catch (err) {
       console.error("Import notes failed:", err);
