@@ -344,7 +344,7 @@ const NotesApp = (() => {
     return note && typeof note === "object" && typeof note.title === "string";
   }
 
-  function normaliseImportedNotes(payload) {
+  function normalizeImportedNotes(payload) {
     if (Array.isArray(payload)) return payload;
     if (payload && Array.isArray(payload.notes)) return payload.notes;
     if (isValidImportedNote(payload)) return [payload];
@@ -353,6 +353,10 @@ const NotesApp = (() => {
 
   function normalizeComparableId(value) {
     if (value === null || value === undefined) return "";
+    return String(value).trim().toLowerCase().slice(0, 128);
+  }
+
+  function sanitizeIdToken(value) {
     return String(value)
       .trim()
       .replace(/[^a-zA-Z0-9_-]/g, "-")
@@ -362,8 +366,8 @@ const NotesApp = (() => {
   }
 
   function createSafeImportedId(seed) {
-    const normalized = normalizeComparableId(seed);
-    if (normalized) return normalized;
+    const token = sanitizeIdToken(seed);
+    if (token) return token;
     return `imp-${Crypto.randomId(10).toLowerCase()}`;
   }
 
@@ -372,7 +376,7 @@ const NotesApp = (() => {
     const createdAt = Number.isFinite(note.createdAt) ? Number(note.createdAt) : now;
     const updatedAt = Number.isFinite(note.updatedAt) ? Number(note.updatedAt) : createdAt;
     const tags = Array.isArray(note.tags)
-      ? note.tags.filter((tag) => typeof tag === "string").slice(0, 20)
+      ? note.tags.filter((tag) => typeof tag === "string" && tag.length <= 100).slice(0, 20)
       : [];
 
     const normalizedId = createSafeImportedId(note.id);
@@ -434,17 +438,57 @@ const NotesApp = (() => {
         </div>
       `;
       document.body.appendChild(overlay);
+      const previouslyFocusedElement = document.activeElement;
+      const getFocusableElements = () =>
+        Array.from(
+          overlay.querySelectorAll(
+            'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+          )
+        );
       let isClosed = false;
       const onKeyDown = (event) => {
-        if (event.key === "Escape") cleanup("cancel");
+        if (event.key === "Escape") {
+          cleanup("cancel");
+          return;
+        }
+          if (event.key !== "Tab") return;
+        const focusable = getFocusableElements();
+        if (!focusable.length) {
+          event.preventDefault();
+          return;
+        }
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        const current = document.activeElement;
+        if (event.shiftKey) {
+          if (current === first || !overlay.contains(current)) {
+            event.preventDefault();
+            last.focus();
+          }
+        } else if (current === last || !overlay.contains(current)) {
+          event.preventDefault();
+          first.focus();
+        }
       };
       document.addEventListener("keydown", onKeyDown);
+      const initialFocusTarget =
+        overlay.querySelector("#notes-import-close") || overlay.querySelector("#notes-import-skip-conflicts");
+      if (initialFocusTarget && typeof initialFocusTarget.focus === "function") {
+        initialFocusTarget.focus();
+      }
 
       const cleanup = (decision) => {
         if (isClosed) return;
         isClosed = true;
         document.removeEventListener("keydown", onKeyDown);
         overlay.remove();
+        if (
+          previouslyFocusedElement &&
+          typeof previouslyFocusedElement.focus === "function" &&
+          document.contains(previouslyFocusedElement)
+        ) {
+          previouslyFocusedElement.focus();
+        }
         resolve(decision);
       };
 
@@ -490,12 +534,12 @@ const NotesApp = (() => {
       };
 
       const onWindowFocus = () => {
-        // File picker closes before focus returns. If no file was selected, treat as cancel.
+        // File picker closes before focus returns. Give change handlers a small window first.
         setTimeout(() => {
           if (settled) return;
           const file = input.files && input.files[0];
           if (!file) settleResolve(null);
-        }, 0);
+        }, 200);
       };
 
       window.addEventListener("focus", onWindowFocus);
@@ -531,7 +575,7 @@ const NotesApp = (() => {
         return;
       }
 
-      const imported = normaliseImportedNotes(parsed).filter(isValidImportedNote);
+      const imported = normalizeImportedNotes(parsed).filter(isValidImportedNote);
       if (!imported.length) {
         showToast("Import failed: no valid notes found in file", "error");
         return;
