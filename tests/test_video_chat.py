@@ -1254,6 +1254,11 @@ def test_video_room_includes_voice_controller_ui():
         'id="slider-monitor-volume"',
         'id="slider-mic-gain"',
         'src="js/voice-changer.js"',
+        'id="call-health-summary"',
+        'id="toggle-health-graphs"',
+        'id="toggle-tech-details"',
+        'id="quality-trend-canvas"',
+        'id="tech-details-body"',
     ]
     for snippet in required_snippets:
         assert snippet in html, f"Expected snippet missing in video-room.html: {snippet}"
@@ -1282,6 +1287,8 @@ def test_video_chat_lobby_hides_in_room_controls():
     assert 'id="my-peer-id"' not in html
     assert "Copy Room ID" not in html
     assert "Add Participant" not in html
+    assert 'id="call-health-summary"' not in html
+    assert 'id="toggle-health-graphs"' not in html
 
 
 def test_video_room_peerjs_script_has_no_sri_integrity():
