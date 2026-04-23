@@ -1213,3 +1213,92 @@ html.dark .border-blue-200 {
 html.dark .border-green-300 {
   border-color: rgba(22, 163, 74, 0.4) !important;
 }
+
+/* Call health + technical details */
+html.dark .health-item {
+  border-color: var(--blt-border);
+  background: var(--blt-bg-secondary);
+}
+
+html.dark .health-label {
+  color: var(--blt-text-tertiary);
+}
+
+html.dark .health-value {
+  color: var(--blt-text-primary);
+}
+
+html.dark .quality-excellent {
+  background: rgba(22, 101, 52, 0.38);
+  color: #86efac;
+}
+
+html.dark .quality-good {
+  background: rgba(29, 78, 216, 0.32);
+  color: #93c5fd;
+}
+
+html.dark .quality-fair {
+  background: rgba(120, 53, 15, 0.38);
+  color: #fcd34d;
+}
+
+html.dark .quality-poor {
+  background: rgba(153, 27, 27, 0.38);
+  color: #fca5a5;
+}
+
+html.dark .quality-idle {
+  background: #374151;
+  color: var(--blt-text-tertiary);
+}
+
+html.dark .health-tip {
+  color: var(--blt-text-secondary);
+}
+
+html.dark .tech-details-panel {
+  border-color: var(--blt-border);
+  background: var(--blt-bg-secondary);
+}
+
+html.dark .tech-details-head {
+  border-bottom-color: var(--blt-border);
+  color: var(--blt-text-secondary);
+}
+
+html.dark .tech-table th,
+html.dark .tech-table td {
+  border-bottom-color: var(--blt-border);
+}
+
+html.dark .tech-table th {
+  color: var(--blt-text-tertiary);
+  background: var(--blt-bg-light-panel);
+}
+
+html.dark .tech-table td {
+  color: var(--blt-text-secondary);
+}
+
+html.dark .tech-table-empty {
+  color: var(--blt-text-tertiary);
+}
+
+html.dark .health-chart-card {
+  border-color: var(--blt-border);
+  background: var(--blt-bg-secondary);
+}
+
+html.dark .health-chart-head {
+  color: var(--blt-text-secondary);
+}
+
+html.dark .legend-item {
+  color: var(--blt-text-tertiary);
+}
+
+html.dark #quality-trend-canvas,
+html.dark #network-trend-canvas {
+  background: var(--blt-bg-light-panel);
+}
